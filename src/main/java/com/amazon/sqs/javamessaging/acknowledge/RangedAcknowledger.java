@@ -22,7 +22,7 @@ import java.util.Queue;
 import javax.jms.JMSException;
 
 
-import com.amazon.sqs.javamessaging.AmazonSQSMessagingClientWrapper;
+import com.amazon.sqs.javamessaging.SqsMessagingClientWrapper;
 import com.amazon.sqs.javamessaging.SQSSession;
 import com.amazon.sqs.javamessaging.message.SQSMessage;
 import org.slf4j.Logger;
@@ -43,13 +43,13 @@ import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
 public class RangedAcknowledger extends BulkSQSOperation implements Acknowledger {
     private static final Logger LOG = LoggerFactory.getLogger(RangedAcknowledger.class);
 
-    private final AmazonSQSMessagingClientWrapper amazonSQSClient;
+    private final SqsMessagingClientWrapper amazonSQSClient;
 
     private final SQSSession session;
 
     private final Queue<SQSMessageIdentifier> unAckMessages;
 
-    public RangedAcknowledger(AmazonSQSMessagingClientWrapper amazonSQSClient, SQSSession session) {
+    public RangedAcknowledger(SqsMessagingClientWrapper amazonSQSClient, SQSSession session) {
         this.amazonSQSClient = amazonSQSClient;
         this.session = session;
         this.unAckMessages = new LinkedList<SQSMessageIdentifier>();

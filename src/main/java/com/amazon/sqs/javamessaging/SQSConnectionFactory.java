@@ -136,7 +136,7 @@ public class SQSConnectionFactory implements ConnectionFactory, QueueConnectionF
     }
     
     private SQSConnection createConnection(SqsClient amazonSQS, AwsCredentialsProvider awsCredentialsProvider) throws JMSException {
-        AmazonSQSMessagingClientWrapper amazonSQSClientJMSWrapper = new AmazonSQSMessagingClientWrapper(amazonSQS, awsCredentialsProvider);
+        SqsMessagingClientWrapper amazonSQSClientJMSWrapper = new SqsMessagingClientWrapper(amazonSQS, awsCredentialsProvider);
         return new SQSConnection(amazonSQSClientJMSWrapper, providerConfiguration.getNumberOfMessagesToPrefetch());
     }
     

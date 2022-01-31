@@ -64,7 +64,7 @@ public class SQSMessageConsumerPrefetch implements Runnable, PrefetchManager {
 
     protected static final String ALL = "All";
 
-    private final AmazonSQSMessagingClientWrapper amazonSQSClient;
+    private final SqsMessagingClientWrapper amazonSQSClient;
 
     private final String queueUrl;
 
@@ -127,7 +127,7 @@ public class SQSMessageConsumerPrefetch implements Runnable, PrefetchManager {
 
     SQSMessageConsumerPrefetch(SQSSessionCallbackScheduler sqsSessionRunnable, Acknowledger acknowledger,
                                NegativeAcknowledger negativeAcknowledger, SQSQueueDestination sqsDestination,
-                               AmazonSQSMessagingClientWrapper amazonSQSClient, int numberOfMessagesToPrefetch) {
+                               SqsMessagingClientWrapper amazonSQSClient, int numberOfMessagesToPrefetch) {
         this.amazonSQSClient = amazonSQSClient;
         this.numberOfMessagesToPrefetch = numberOfMessagesToPrefetch;
 

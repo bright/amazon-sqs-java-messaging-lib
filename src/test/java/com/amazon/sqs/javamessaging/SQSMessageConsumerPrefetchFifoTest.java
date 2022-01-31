@@ -70,7 +70,7 @@ public class SQSMessageConsumerPrefetchFifoTest {
     private SQSMessageConsumerPrefetch consumerPrefetch;
     private ExponentialBackoffStrategy backoffStrategy;
 
-    private AmazonSQSMessagingClientWrapper amazonSQSClient;
+    private SqsMessagingClientWrapper amazonSQSClient;
 
     @Parameters
     public static List<Object[]> getParameters() {
@@ -86,7 +86,7 @@ public class SQSMessageConsumerPrefetchFifoTest {
     @Before
     public void setup() {
 
-        amazonSQSClient = mock(AmazonSQSMessagingClientWrapper.class);
+        amazonSQSClient = mock(SqsMessagingClientWrapper.class);
 
         SQSConnection parentSQSConnection = mock(SQSConnection.class);
         when(parentSQSConnection.getWrappedAmazonSQSClient()).thenReturn(amazonSQSClient);

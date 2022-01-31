@@ -37,7 +37,7 @@ public class SQSConnectionTest {
     public static final String QUEUE_URL = "QueueUrl";
     public static final String QUEUE_NAME = "QueueName";
 
-    private AmazonSQSMessagingClientWrapper amazonSQSClientJMSWrapper;
+    private SqsMessagingClientWrapper amazonSQSClientJMSWrapper;
     private SQSConnection sqsConnection;
     private SQSQueueDestination destination;
     private ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
@@ -50,7 +50,7 @@ public class SQSConnectionTest {
         destination = new SQSQueueDestination(QUEUE_NAME, QUEUE_URL);
 
         int numberOfMessagesToPrefetch = 10;
-        amazonSQSClientJMSWrapper = mock(AmazonSQSMessagingClientWrapper.class);
+        amazonSQSClientJMSWrapper = mock(SqsMessagingClientWrapper.class);
         sqsConnection = spy(new SQSConnection(amazonSQSClientJMSWrapper, numberOfMessagesToPrefetch));
 
         session1 = mock(SQSSession.class);

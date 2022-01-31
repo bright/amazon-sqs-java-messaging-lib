@@ -102,7 +102,7 @@ public class SQSMessageConsumerPrefetchTest {
     private ExponentialBackoffStrategy backoffStrategy;
 
     private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-    private AmazonSQSMessagingClientWrapper amazonSQSClient;
+    private SqsMessagingClientWrapper amazonSQSClient;
 
     public SQSMessageConsumerPrefetchTest(int numberOfMessagesToPrefetch) {
         this.numberOfMessagesToPrefetch = numberOfMessagesToPrefetch;
@@ -111,7 +111,7 @@ public class SQSMessageConsumerPrefetchTest {
     @Before
     public void setup() {
 
-        amazonSQSClient = mock(AmazonSQSMessagingClientWrapper.class);
+        amazonSQSClient = mock(SqsMessagingClientWrapper.class);
 
         SQSConnection parentSQSConnection = mock(SQSConnection.class);
         when(parentSQSConnection.getWrappedAmazonSQSClient()).thenReturn(amazonSQSClient);

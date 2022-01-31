@@ -78,12 +78,12 @@ public class SQSSessionTest  {
     private SQSMessageConsumer consumer2;
     private SQSMessageProducer producer1;
     private SQSMessageProducer producer2;
-    private AmazonSQSMessagingClientWrapper sqsClientJMSWrapper;
+    private SqsMessagingClientWrapper sqsClientJMSWrapper;
 
     @Before
     public void setup() throws JMSException {
 
-        sqsClientJMSWrapper = mock(AmazonSQSMessagingClientWrapper.class);
+        sqsClientJMSWrapper = mock(SqsMessagingClientWrapper.class);
 
         parentSQSConnection = mock(SQSConnection.class);
         when(parentSQSConnection.getWrappedAmazonSQSClient())

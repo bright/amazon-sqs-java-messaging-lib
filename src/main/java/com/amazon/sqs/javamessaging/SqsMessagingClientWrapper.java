@@ -37,8 +37,8 @@ import software.amazon.awssdk.services.sqs.model.*;
  * <code>AmazonServiceException</code> and <code>AmazonClientException</code> into
  * JMSException/JMSSecurityException.
  */
-public class AmazonSQSMessagingClientWrapper {
-    private static final Logger LOG = LoggerFactory.getLogger(AmazonSQSMessagingClientWrapper.class);
+public class SqsMessagingClientWrapper {
+    private static final Logger LOG = LoggerFactory.getLogger(SqsMessagingClientWrapper.class);
 
     private static final Set<String> SECURITY_EXCEPTION_ERROR_CODES;
 
@@ -62,7 +62,7 @@ public class AmazonSQSMessagingClientWrapper {
      * @param SqsClientClient The AWS SDK Client for SQS.
      * @throws JMSException if the client is null
      */
-    public AmazonSQSMessagingClientWrapper(SqsClient SqsClientClient) throws JMSException {
+    public SqsMessagingClientWrapper(SqsClient SqsClientClient) throws JMSException {
         this(SqsClientClient, null);
     }
 
@@ -70,7 +70,7 @@ public class AmazonSQSMessagingClientWrapper {
      * @param SqsClientClient The AWS SDK Client for SQS.
      * @throws JMSException if the client is null
      */
-    public AmazonSQSMessagingClientWrapper(SqsClient SqsClientClient, AwsCredentialsProvider credentialsProvider) throws JMSException {
+    public SqsMessagingClientWrapper(SqsClient SqsClientClient, AwsCredentialsProvider credentialsProvider) throws JMSException {
         if (SqsClientClient == null) {
             throw new JMSException("Amazon SQS client cannot be null");
         }

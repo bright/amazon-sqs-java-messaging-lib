@@ -67,7 +67,7 @@ public class SQSSessionCallbackSchedulerTest {
     private NegativeAcknowledger negativeAcknowledger;
     private SQSSessionCallbackScheduler sqsSessionRunnable;
     private SQSConnection sqsConnection;
-    private AmazonSQSMessagingClientWrapper sqsClient;
+    private SqsMessagingClientWrapper sqsClient;
     private ArrayDeque<SQSSession.CallbackEntry> callbackQueue;
     private Acknowledger acknowledger;
     private SQSMessageConsumer consumer;
@@ -75,7 +75,7 @@ public class SQSSessionCallbackSchedulerTest {
     @Before
     public void setup() {
 
-        sqsClient = mock(AmazonSQSMessagingClientWrapper.class);
+        sqsClient = mock(SqsMessagingClientWrapper.class);
 
         sqsConnection = mock(SQSConnection.class);
         when(sqsConnection.getWrappedAmazonSQSClient())

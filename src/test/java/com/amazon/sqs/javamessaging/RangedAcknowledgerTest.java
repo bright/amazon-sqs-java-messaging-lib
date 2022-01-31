@@ -47,7 +47,7 @@ public class RangedAcknowledgerTest extends AcknowledgerCommon {
 
     @Before
     public void setupRanded() throws JMSException {
-        amazonSQSClient = mock(AmazonSQSMessagingClientWrapper.class);
+        amazonSQSClient = mock(SqsMessagingClientWrapper.class);
         acknowledger = AcknowledgeMode.ACK_RANGE.createAcknowledger(amazonSQSClient, mock(SQSSession.class));
     }
 

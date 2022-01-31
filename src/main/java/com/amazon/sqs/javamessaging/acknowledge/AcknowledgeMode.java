@@ -16,7 +16,7 @@ package com.amazon.sqs.javamessaging.acknowledge;
 
 import javax.jms.JMSException;
 
-import com.amazon.sqs.javamessaging.AmazonSQSMessagingClientWrapper;
+import com.amazon.sqs.javamessaging.SqsMessagingClientWrapper;
 import com.amazon.sqs.javamessaging.SQSSession;
 
 /**
@@ -64,7 +64,7 @@ public enum AcknowledgeMode {
      * @throws JMSException
      *             If invalid acknowledge mode is used.
      */
-    public Acknowledger createAcknowledger(AmazonSQSMessagingClientWrapper amazonSQSClient, SQSSession parentSQSSession) throws JMSException {
+    public Acknowledger createAcknowledger(SqsMessagingClientWrapper amazonSQSClient, SQSSession parentSQSSession) throws JMSException {
         switch (this) {
         case ACK_AUTO:
             return new AutoAcknowledger(amazonSQSClient, parentSQSSession);

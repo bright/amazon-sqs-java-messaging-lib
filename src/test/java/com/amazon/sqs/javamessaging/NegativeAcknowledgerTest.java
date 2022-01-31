@@ -50,7 +50,7 @@ public class NegativeAcknowledgerTest extends AcknowledgerCommon {
 
     @Before
     public void setupRanded() throws JMSException {
-        amazonSQSClient = mock(AmazonSQSMessagingClientWrapper.class);
+        amazonSQSClient = mock(SqsMessagingClientWrapper.class);
         negativeAcknowledger = spy(new NegativeAcknowledger(amazonSQSClient));
     }
 

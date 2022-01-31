@@ -43,12 +43,12 @@ public class AutoAcknowledgerTest {
     private static final String RECEIPT_HANDLE = "ReceiptHandle";
 
     private AutoAcknowledger acknowledger;
-    private AmazonSQSMessagingClientWrapper amazonSQSClient;
+    private SqsMessagingClientWrapper amazonSQSClient;
     private SQSSession session;
 
     @Before
     public void before() throws Exception {
-        amazonSQSClient = mock(AmazonSQSMessagingClientWrapper.class);
+        amazonSQSClient = mock(SqsMessagingClientWrapper.class);
         session = mock(SQSSession.class);
         acknowledger = (AutoAcknowledger) spy(AcknowledgeMode.ACK_AUTO.createAcknowledger(amazonSQSClient, session));
     }

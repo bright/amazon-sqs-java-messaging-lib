@@ -21,7 +21,7 @@ import java.util.Map;
 
 import javax.jms.JMSException;
 
-import com.amazon.sqs.javamessaging.AmazonSQSMessagingClientWrapper;
+import com.amazon.sqs.javamessaging.SqsMessagingClientWrapper;
 import com.amazon.sqs.javamessaging.SQSSession;
 import com.amazon.sqs.javamessaging.message.SQSMessage;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
@@ -33,7 +33,7 @@ import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
  */
 public class UnorderedAcknowledger implements Acknowledger {
 
-    private final AmazonSQSMessagingClientWrapper amazonSQSClient;
+    private final SqsMessagingClientWrapper amazonSQSClient;
     
     private final SQSSession session;
     
@@ -41,7 +41,7 @@ public class UnorderedAcknowledger implements Acknowledger {
     // identifier
     private final Map<String, SQSMessageIdentifier> unAckMessages;
 
-    public UnorderedAcknowledger (AmazonSQSMessagingClientWrapper amazonSQSClient, SQSSession session) {
+    public UnorderedAcknowledger (SqsMessagingClientWrapper amazonSQSClient, SQSSession session) {
         this.amazonSQSClient = amazonSQSClient;
         this.session = session;
         this.unAckMessages  = new HashMap<String, SQSMessageIdentifier>();

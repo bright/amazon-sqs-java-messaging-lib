@@ -126,7 +126,7 @@ public class SQSSession implements Session, QueueSession {
      */
     private volatile boolean closing = false;
 
-    private final AmazonSQSMessagingClientWrapper amazonSQSClient;
+    private final SqsMessagingClientWrapper amazonSQSClient;
     private final SQSConnection parentSQSConnection;
 
     /**

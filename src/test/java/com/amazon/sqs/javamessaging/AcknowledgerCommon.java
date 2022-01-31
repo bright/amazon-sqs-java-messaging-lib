@@ -39,7 +39,7 @@ public class AcknowledgerCommon {
 
     protected String baseQueueUrl = "queueUrl";
     protected Acknowledger acknowledger;
-    protected AmazonSQSMessagingClientWrapper amazonSQSClient;
+    protected SqsMessagingClientWrapper amazonSQSClient;
     protected List<SQSMessage> populatedMessages = new ArrayList<SQSMessage>();
 
     /*

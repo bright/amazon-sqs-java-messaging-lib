@@ -87,11 +87,11 @@ public class SQSMessageProducer implements MessageProducer, QueueSender {
      */
     final AtomicBoolean closed = new AtomicBoolean(false);
 
-    private final AmazonSQSMessagingClientWrapper amazonSQSClient;
+    private final SqsMessagingClientWrapper amazonSQSClient;
     private final SQSQueueDestination sqsDestination;
     private final SQSSession parentSQSSession;
 
-    SQSMessageProducer(AmazonSQSMessagingClientWrapper amazonSQSClient, SQSSession parentSQSSession,
+    SQSMessageProducer(SqsMessagingClientWrapper amazonSQSClient, SQSSession parentSQSSession,
                        SQSQueueDestination destination) throws JMSException {
         this.sqsDestination = destination;
         this.amazonSQSClient = amazonSQSClient;

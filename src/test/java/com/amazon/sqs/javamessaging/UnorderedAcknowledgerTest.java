@@ -41,7 +41,7 @@ public class UnorderedAcknowledgerTest extends AcknowledgerCommon {
 
     @Before
     public void setupUnordered() throws JMSException {
-        amazonSQSClient = mock(AmazonSQSMessagingClientWrapper.class);
+        amazonSQSClient = mock(SqsMessagingClientWrapper.class);
         acknowledger = AcknowledgeMode.ACK_UNORDERED.createAcknowledger(amazonSQSClient, mock(SQSSession.class));
     }
 

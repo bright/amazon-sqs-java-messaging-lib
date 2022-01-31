@@ -86,7 +86,7 @@ public class SQSConnection implements Connection, QueueConnection {
     /** Used for interactions with connection state. */
     private final Object stateLock = new Object();
     
-    private final AmazonSQSMessagingClientWrapper amazonSQSClient;
+    private final SqsMessagingClientWrapper amazonSQSClient;
 
     /**
      * Configures the amount of messages that can be prefetched by a consumer. A
@@ -108,7 +108,7 @@ public class SQSConnection implements Connection, QueueConnection {
 
     private final Set<Session> sessions = Collections.newSetFromMap(new ConcurrentHashMap<Session, Boolean>());
 
-    SQSConnection(AmazonSQSMessagingClientWrapper amazonSQSClientJMSWrapper, int numberOfMessagesToPrefetch) {
+    SQSConnection(SqsMessagingClientWrapper amazonSQSClientJMSWrapper, int numberOfMessagesToPrefetch) {
         amazonSQSClient = amazonSQSClientJMSWrapper;
         this.numberOfMessagesToPrefetch = numberOfMessagesToPrefetch;
 
@@ -132,7 +132,7 @@ public class SQSConnection implements Connection, QueueConnection {
      * 
      * @return  wrapped version of the AmazonSQSClient used by this connection
      */
-    public AmazonSQSMessagingClientWrapper getWrappedAmazonSQSClient() {
+    public SqsMessagingClientWrapper getWrappedAmazonSQSClient() {
         return amazonSQSClient;        
     }
     

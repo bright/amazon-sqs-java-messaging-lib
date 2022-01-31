@@ -19,7 +19,7 @@ import java.util.List;
 
 import javax.jms.JMSException;
 
-import com.amazon.sqs.javamessaging.AmazonSQSMessagingClientWrapper;
+import com.amazon.sqs.javamessaging.SqsMessagingClientWrapper;
 import com.amazon.sqs.javamessaging.SQSSession;
 import com.amazon.sqs.javamessaging.message.SQSMessage;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
@@ -32,10 +32,10 @@ import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
  */
 public class AutoAcknowledger implements Acknowledger {
 
-    private final AmazonSQSMessagingClientWrapper amazonSQSClient;
+    private final SqsMessagingClientWrapper amazonSQSClient;
     private final SQSSession session;
 
-    public AutoAcknowledger(AmazonSQSMessagingClientWrapper amazonSQSClient, SQSSession session) {
+    public AutoAcknowledger(SqsMessagingClientWrapper amazonSQSClient, SQSSession session) {
         this.amazonSQSClient = amazonSQSClient;
         this.session = session;
     }

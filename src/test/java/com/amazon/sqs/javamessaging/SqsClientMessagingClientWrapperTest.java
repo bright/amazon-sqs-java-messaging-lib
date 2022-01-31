@@ -40,12 +40,12 @@ public class SqsClientMessagingClientWrapperTest {
     private static final String OWNER_ACCOUNT_ID = "accountId";
 
     private SqsClient amazonSQSClient;
-    private AmazonSQSMessagingClientWrapper wrapper;
+    private SqsMessagingClientWrapper wrapper;
 
     @Before
     public void setup() throws JMSException {
         amazonSQSClient = mock(SqsClient.class);
-        wrapper = new AmazonSQSMessagingClientWrapper(amazonSQSClient);
+        wrapper = new SqsMessagingClientWrapper(amazonSQSClient);
     }
 
     /*
@@ -53,7 +53,7 @@ public class SqsClientMessagingClientWrapperTest {
      */
     @Test(expected = JMSException.class)
     public void testNullSQSClient() throws JMSException {
-        new AmazonSQSMessagingClientWrapper(null);
+        new SqsMessagingClientWrapper(null);
     }
 
     /*

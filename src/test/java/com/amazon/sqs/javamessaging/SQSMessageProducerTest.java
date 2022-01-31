@@ -76,13 +76,13 @@ public class SQSMessageProducerTest {
     private SQSQueueDestination destination;
     private SQSSession sqsSession;
     private SQSConnection sqsConnection;
-    private AmazonSQSMessagingClientWrapper amazonSQSClient;
+    private SqsMessagingClientWrapper amazonSQSClient;
     private Acknowledger acknowledger;
 
     @Before
     public void setup() throws JMSException {
 
-        amazonSQSClient = mock(AmazonSQSMessagingClientWrapper.class);
+        amazonSQSClient = mock(SqsMessagingClientWrapper.class);
         sqsConnection = mock(SQSConnection.class);
 
         acknowledger = mock(Acknowledger.class);

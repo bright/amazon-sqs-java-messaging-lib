@@ -44,7 +44,7 @@ public class MessageListenerConcurrentOperationTest {
     private static final String QUEUE_NAME = "queueName";
     private static final int NUMBER_OF_MESSAGES_TO_PREFETCH = 10;
 
-    private AmazonSQSMessagingClientWrapper amazonSQSClient;
+    private SqsMessagingClientWrapper amazonSQSClient;
     private SQSMessageConsumerPrefetch.MessageManager msgManager;
     private volatile SQSSession session;
     private volatile SQSConnection connection;
@@ -83,7 +83,7 @@ public class MessageListenerConcurrentOperationTest {
         Acknowledger acknowledger = mock(Acknowledger.class);
         NegativeAcknowledger negativeAcknowledger = mock(NegativeAcknowledger.class);
         SQSQueueDestination sqsDestination = new SQSQueueDestination(QUEUE_NAME, QUEUE_URL);
-        amazonSQSClient = mock(AmazonSQSMessagingClientWrapper.class);
+        amazonSQSClient = mock(SqsMessagingClientWrapper.class);
 
         connection = new SQSConnection(amazonSQSClient, NUMBER_OF_MESSAGES_TO_PREFETCH);
         session = new SQSSession(connection, AcknowledgeMode.ACK_AUTO);
