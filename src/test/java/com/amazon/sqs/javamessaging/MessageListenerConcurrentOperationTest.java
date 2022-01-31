@@ -14,13 +14,6 @@
  */
 package com.amazon.sqs.javamessaging;
 
-import com.amazon.sqs.javamessaging.AmazonSQSMessagingClientWrapper;
-import com.amazon.sqs.javamessaging.SQSConnection;
-import com.amazon.sqs.javamessaging.SQSMessageConsumer;
-import com.amazon.sqs.javamessaging.SQSMessageConsumerPrefetch;
-import com.amazon.sqs.javamessaging.SQSQueueDestination;
-import com.amazon.sqs.javamessaging.SQSSession;
-import com.amazon.sqs.javamessaging.SQSSessionCallbackScheduler;
 import com.amazon.sqs.javamessaging.acknowledge.AcknowledgeMode;
 import com.amazon.sqs.javamessaging.acknowledge.Acknowledger;
 import com.amazon.sqs.javamessaging.acknowledge.NegativeAcknowledger;

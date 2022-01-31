@@ -15,21 +15,12 @@
 package com.amazon.sqs.javamessaging;
 
 
-import com.amazon.sqs.javamessaging.AmazonSQSMessagingClientWrapper;
-import com.amazon.sqs.javamessaging.SQSConnection;
-import com.amazon.sqs.javamessaging.SQSMessageProducer;
-import com.amazon.sqs.javamessaging.SQSQueueDestination;
-import com.amazon.sqs.javamessaging.SQSSession;
+
 import com.amazon.sqs.javamessaging.acknowledge.Acknowledger;
 import com.amazon.sqs.javamessaging.message.SQSBytesMessage;
 import com.amazon.sqs.javamessaging.message.SQSMessage;
 import com.amazon.sqs.javamessaging.message.SQSObjectMessage;
 import com.amazon.sqs.javamessaging.message.SQSTextMessage;
-import com.amazonaws.services.sqs.model.DeleteMessageRequest;
-import com.amazonaws.services.sqs.model.MessageAttributeValue;
-import com.amazonaws.services.sqs.model.SendMessageRequest;
-import com.amazonaws.services.sqs.model.SendMessageResult;
-import com.amazonaws.util.Base64;
 
 import javax.jms.InvalidDestinationException;
 import javax.jms.JMSException;
@@ -52,6 +43,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
+import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
+import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
+import software.amazon.awssdk.utils.BinaryUtils;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -160,9 +156,10 @@ public class SQSMessageProducerTest {
         /*
          * Test Empty byte message default attribute
          */
-        MessageAttributeValue messageAttributeValueByte = new MessageAttributeValue();
-        messageAttributeValueByte.setDataType("String");
-        messageAttributeValueByte.setStringValue("byte");
+        MessageAttributeValue messageAttributeValueByte = MessageAttributeValue.builder()
+                .dataType("String")
+                .stringValue("byte")
+                .build();
 
         SQSMessage sqsByte = new SQSBytesMessage();
         Map<String, MessageAttributeValue> messageAttributeByte = producer.propertyToMessageAttribute(sqsByte);
@@ -199,54 +196,54 @@ public class SQSMessageProducerTest {
         String objectProperty = "ObjectProperty";
 
         sqsText.setBooleanProperty(booleanProperty, true);
-        sqsText.setByteProperty(byteProperty, (byte)1);
+        sqsText.setByteProperty(byteProperty, (byte) 1);
         sqsText.setShortProperty(shortProperty, (short) 2);
         sqsText.setIntProperty(intProperty, 3);
         sqsText.setLongProperty(longProperty, 4L);
-        sqsText.setFloatProperty(floatProperty, (float)5.0);
+        sqsText.setFloatProperty(floatProperty, (float) 5.0);
         sqsText.setDoubleProperty(doubleProperty, 6.0);
         sqsText.setStringProperty(stringProperty, "seven");
         sqsText.setObjectProperty(objectProperty, new Integer(8));
 
-        MessageAttributeValue messageAttributeValueBoolean = new MessageAttributeValue();
-        messageAttributeValueBoolean.setDataType("Number.Boolean");
-        messageAttributeValueBoolean.setStringValue("1");
+        MessageAttributeValue messageAttributeValueBoolean = MessageAttributeValue.builder()
+        .dataType("Number.Boolean")
+        .stringValue("1").build();
 
-        MessageAttributeValue messageAttributeValueByte = new MessageAttributeValue();
-        messageAttributeValueByte.setDataType("Number.byte");
-        messageAttributeValueByte.setStringValue("1");
+        MessageAttributeValue messageAttributeValueByte = MessageAttributeValue.builder()
+        .dataType("Number.byte")
+        .stringValue("1").build();
 
-        MessageAttributeValue messageAttributeValueShort = new MessageAttributeValue();
-        messageAttributeValueShort.setDataType("Number.short");
-        messageAttributeValueShort.setStringValue("2");
+        MessageAttributeValue messageAttributeValueShort = MessageAttributeValue.builder()
+        .dataType("Number.short")
+        .stringValue("2").build();
 
-        MessageAttributeValue messageAttributeValueInt = new MessageAttributeValue();
-        messageAttributeValueInt.setDataType("Number.int");
-        messageAttributeValueInt.setStringValue("3");
+        MessageAttributeValue messageAttributeValueInt = MessageAttributeValue.builder()
+        .dataType("Number.int")
+        .stringValue("3").build();
 
-        MessageAttributeValue messageAttributeValueLong = new MessageAttributeValue();
-        messageAttributeValueLong.setDataType("Number.long");
-        messageAttributeValueLong.setStringValue("4");
+        MessageAttributeValue messageAttributeValueLong = MessageAttributeValue.builder()
+        .dataType("Number.long")
+        .stringValue("4").build();
 
-        MessageAttributeValue messageAttributeValueFloat = new MessageAttributeValue();
-        messageAttributeValueFloat.setDataType("Number.float");
-        messageAttributeValueFloat.setStringValue("5.0");
+        MessageAttributeValue messageAttributeValueFloat = MessageAttributeValue.builder()
+        .dataType("Number.float")
+        .stringValue("5.0").build();
 
-        MessageAttributeValue messageAttributeValueDouble = new MessageAttributeValue();
-        messageAttributeValueDouble.setDataType("Number.double");
-        messageAttributeValueDouble.setStringValue("6.0");
+        MessageAttributeValue messageAttributeValueDouble = MessageAttributeValue.builder()
+        .dataType("Number.double")
+        .stringValue("6.0").build();
 
-        MessageAttributeValue messageAttributeValueString = new MessageAttributeValue();
-        messageAttributeValueString.setDataType("String");
-        messageAttributeValueString.setStringValue("seven");
+        MessageAttributeValue messageAttributeValueString = MessageAttributeValue.builder()
+        .dataType("String")
+        .stringValue("seven").build();
 
-        MessageAttributeValue messageAttributeValueObject = new MessageAttributeValue();
-        messageAttributeValueObject.setDataType("Number.int");
-        messageAttributeValueObject.setStringValue("8");
+        MessageAttributeValue messageAttributeValueObject = MessageAttributeValue.builder()
+        .dataType("Number.int")
+        .stringValue("8").build();
 
-        MessageAttributeValue messageAttributeValueJMSSQSMessageType = new MessageAttributeValue();
-        messageAttributeValueJMSSQSMessageType.setDataType("String");
-        messageAttributeValueJMSSQSMessageType.setStringValue("text");
+        MessageAttributeValue messageAttributeValueJMSSQSMessageType = MessageAttributeValue.builder()
+        .dataType("String")
+        .stringValue("text").build();
 
         /*
          * Convert property to sqs message attribute
@@ -332,8 +329,8 @@ public class SQSMessageProducerTest {
         Map<String, MessageAttributeValue> messageAttributes = createMessageAttribute("text");
 
         when(amazonSQSClient.sendMessage(any(SendMessageRequest.class)))
-                .thenReturn(new SendMessageResult().withMessageId(MESSAGE_ID_1))
-                .thenReturn(new SendMessageResult().withMessageId(MESSAGE_ID_2));
+                .thenReturn(SendMessageResponse.builder().messageId(MESSAGE_ID_1).build())
+                .thenReturn(SendMessageResponse.builder().messageId(MESSAGE_ID_2).build());
 
         producer.sendInternal(destination, msg);
 
@@ -361,25 +358,26 @@ public class SQSMessageProducerTest {
         /*
          * Set up non JMS sqs message
          */
-        Map<String,MessageAttributeValue> mapMessageAttributes = new HashMap<String, MessageAttributeValue>();
-        MessageAttributeValue messageAttributeValue = new MessageAttributeValue();
-        messageAttributeValue.setStringValue(SQSMessage.TEXT_MESSAGE_TYPE);
-        messageAttributeValue.setDataType(SQSMessagingClientConstants.STRING);
+        Map<String, MessageAttributeValue> mapMessageAttributes = new HashMap<String, MessageAttributeValue>();
+        MessageAttributeValue messageAttributeValue = MessageAttributeValue.builder()
+        .stringValue(SQSMessage.TEXT_MESSAGE_TYPE)
+        .dataType(SQSMessagingClientConstants.STRING).build();
         mapMessageAttributes.put(SQSMessage.JMS_SQS_MESSAGE_TYPE, messageAttributeValue);
 
-        Map<String, String> mapAttributes = new HashMap<String, String>();
-        mapAttributes.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "1");
+        Map<MessageSystemAttributeName, String> mapAttributes = new HashMap<MessageSystemAttributeName, String>();
+        mapAttributes.put(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "1");
 
-        com.amazonaws.services.sqs.model.Message message =
-                new com.amazonaws.services.sqs.model.Message()
-                            .withMessageAttributes(mapMessageAttributes)
-                            .withAttributes(mapAttributes)
-                            .withBody("MessageBody");
+        software.amazon.awssdk.services.sqs.model.Message message =
+                software.amazon.awssdk.services.sqs.model.Message.builder()
+                        .messageAttributes(mapMessageAttributes)
+                        .attributes(mapAttributes)
+                        .body("MessageBody")
+                        .build();
 
         SQSTextMessage msg = spy(new SQSTextMessage(acknowledger, QUEUE_URL, message));
 
         when(amazonSQSClient.sendMessage(any(SendMessageRequest.class)))
-                .thenReturn(new SendMessageResult().withMessageId(MESSAGE_ID_1));
+                .thenReturn(SendMessageResponse.builder().messageId(MESSAGE_ID_1).build());
 
         producer.sendInternal(destination, msg);
 
@@ -407,8 +405,8 @@ public class SQSMessageProducerTest {
         Map<String, MessageAttributeValue> messageAttributes = createMessageAttribute("object");
 
         when(amazonSQSClient.sendMessage(any(SendMessageRequest.class)))
-                .thenReturn(new SendMessageResult().withMessageId(MESSAGE_ID_1))
-                .thenReturn(new SendMessageResult().withMessageId(MESSAGE_ID_2));
+                .thenReturn(SendMessageResponse.builder().messageId(MESSAGE_ID_1).build())
+                .thenReturn(SendMessageResponse.builder().messageId(MESSAGE_ID_2).build());
 
         producer.sendInternal(destination, msg);
 
@@ -419,12 +417,12 @@ public class SQSMessageProducerTest {
         msg.setObject(set2);
         String megBody2 = msg.getMessageBody();
         producer.sendInternal(destination, msg);
-        
+
         ArgumentCaptor<SendMessageRequest> argumentCaptor = ArgumentCaptor.forClass(SendMessageRequest.class);
         verify(amazonSQSClient, times(2)).sendMessage(argumentCaptor.capture());
-        
-        assertEquals(megBody1, argumentCaptor.getAllValues().get(0).getMessageBody());
-        assertEquals(megBody2, argumentCaptor.getAllValues().get(1).getMessageBody());
+
+        assertEquals(megBody1, argumentCaptor.getAllValues().get(0).messageBody());
+        assertEquals(megBody2, argumentCaptor.getAllValues().get(1).messageBody());
         verify(msg, times(2)).setJMSDestination(destination);
         verify(msg).setJMSMessageID("ID:" + MESSAGE_ID_1);
         verify(msg).setJMSMessageID("ID:" + MESSAGE_ID_2);
@@ -441,15 +439,15 @@ public class SQSMessageProducerTest {
         /*
          * Set up non JMS sqs message
          */
-        Map<String,MessageAttributeValue> mapMessageAttributes = new HashMap<String, MessageAttributeValue>();
+        Map<String, MessageAttributeValue> mapMessageAttributes = new HashMap<String, MessageAttributeValue>();
 
-        MessageAttributeValue messageAttributeValue = new MessageAttributeValue();
-        messageAttributeValue.setStringValue(SQSMessage.OBJECT_MESSAGE_TYPE);
-        messageAttributeValue.setDataType(SQSMessagingClientConstants.STRING);
+        MessageAttributeValue messageAttributeValue = MessageAttributeValue.builder()
+        .stringValue(SQSMessage.OBJECT_MESSAGE_TYPE)
+        .dataType(SQSMessagingClientConstants.STRING).build();
         mapMessageAttributes.put(SQSMessage.JMS_SQS_MESSAGE_TYPE, messageAttributeValue);
 
-        Map<String, String> mapAttributes = new HashMap<String, String>();
-        mapAttributes.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "1");
+        Map<MessageSystemAttributeName, String> mapAttributes = new HashMap<MessageSystemAttributeName, String>();
+        mapAttributes.put(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "1");
 
         // Encode an object to byte array
         Integer integer = new Integer("10");
@@ -458,20 +456,21 @@ public class SQSMessageProducerTest {
         oStream.writeObject(integer);
         oStream.close();
 
-        String messageBody = Base64.encodeAsString(array.toByteArray());
-        com.amazonaws.services.sqs.model.Message message =
-                new com.amazonaws.services.sqs.model.Message()
-                        .withMessageAttributes(mapMessageAttributes)
-                        .withAttributes(mapAttributes)
-                        .withBody(messageBody);
+        String messageBody = BinaryUtils.toBase64(array.toByteArray());
+        software.amazon.awssdk.services.sqs.model.Message message =
+                software.amazon.awssdk.services.sqs.model.Message.builder()
+                        .messageAttributes(mapMessageAttributes)
+                        .attributes(mapAttributes)
+                        .body(messageBody)
+                        .build();
 
         SQSObjectMessage msg = spy(new SQSObjectMessage(acknowledger, QUEUE_URL, message));
 
         Map<String, MessageAttributeValue> messageAttributes = createMessageAttribute("object");
 
         when(amazonSQSClient.sendMessage(any(SendMessageRequest.class)))
-                .thenReturn(new SendMessageResult().withMessageId(MESSAGE_ID_1))
-                .thenReturn(new SendMessageResult().withMessageId(MESSAGE_ID_2));
+                .thenReturn(SendMessageResponse.builder().messageId(MESSAGE_ID_1).build())
+                .thenReturn(SendMessageResponse.builder().messageId(MESSAGE_ID_2).build());
 
         producer.sendInternal(destination, msg);
 
@@ -489,15 +488,15 @@ public class SQSMessageProducerTest {
     public void testSendInternalSQSByteMessage() throws JMSException {
 
         SQSBytesMessage msg = spy(new SQSBytesMessage());
-        msg.writeByte((byte)0);
+        msg.writeByte((byte) 0);
         msg.reset();
 
         Map<String, MessageAttributeValue> messageAttributes = createMessageAttribute("byte");
 
         String messageId = "MessageId";
         when(amazonSQSClient.sendMessage(any(SendMessageRequest.class)))
-                .thenReturn(new SendMessageResult().withMessageId(MESSAGE_ID_1))
-                .thenReturn(new SendMessageResult().withMessageId(MESSAGE_ID_2));
+                .thenReturn(SendMessageResponse.builder().messageId(MESSAGE_ID_1).build())
+                .thenReturn(SendMessageResponse.builder().messageId(MESSAGE_ID_2).build());
 
         producer.sendInternal(destination, msg);
 
@@ -510,7 +509,7 @@ public class SQSMessageProducerTest {
 
         List<String> messagesBody = Arrays.asList("AA==", "AAAAKg==");
         verify(amazonSQSClient, times(2)).sendMessage(argThat(new sendMessageRequestMatcher(QUEUE_URL, messagesBody,
-                                                                                            messageAttributes)));
+                messageAttributes)));
 
         verify(msg, times(2)).setJMSDestination(destination);
         verify(msg).setJMSMessageID("ID:" + MESSAGE_ID_1);
@@ -524,34 +523,35 @@ public class SQSMessageProducerTest {
      */
     @Test
     public void testSendInternalSQSByteMessageFromReceivedMessage() throws JMSException, IOException {
-        
+
         /*
          * Set up non JMS sqs message
          */
-        Map<String,MessageAttributeValue> mapMessageAttributes = new HashMap<String, MessageAttributeValue>();
-        MessageAttributeValue messageAttributeValue = new MessageAttributeValue();
-        messageAttributeValue.setStringValue(SQSMessage.BYTE_MESSAGE_TYPE);
-        messageAttributeValue.setDataType(SQSMessagingClientConstants.STRING);
+        Map<String, MessageAttributeValue> mapMessageAttributes = new HashMap<String, MessageAttributeValue>();
+        MessageAttributeValue messageAttributeValue = MessageAttributeValue.builder()
+        .stringValue(SQSMessage.BYTE_MESSAGE_TYPE)
+        .dataType(SQSMessagingClientConstants.STRING).build();
         mapMessageAttributes.put(SQSMessage.JMS_SQS_MESSAGE_TYPE, messageAttributeValue);
 
-        Map<String, String> mapAttributes = new HashMap<String, String>();
-        mapAttributes.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "1");
+        Map<MessageSystemAttributeName, String> mapAttributes = new HashMap<MessageSystemAttributeName, String>();
+        mapAttributes.put(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "1");
 
-        byte[] byteArray = new byte[] { 1, 0, 'a', 65 };
-        String messageBody = Base64.encodeAsString(byteArray);
-        com.amazonaws.services.sqs.model.Message message =
-                new com.amazonaws.services.sqs.model.Message()
-                        .withMessageAttributes(mapMessageAttributes)
-                        .withAttributes(mapAttributes)
-                        .withBody(messageBody);
+        byte[] byteArray = new byte[]{1, 0, 'a', 65};
+        String messageBody = BinaryUtils.toBase64(byteArray);
+        software.amazon.awssdk.services.sqs.model.Message message =
+                software.amazon.awssdk.services.sqs.model.Message.builder()
+                        .messageAttributes(mapMessageAttributes)
+                        .attributes(mapAttributes)
+                        .body(messageBody)
+                        .build();
 
         SQSObjectMessage msg = spy(new SQSObjectMessage(acknowledger, QUEUE_URL, message));
 
         Map<String, MessageAttributeValue> messageAttributes = createMessageAttribute("object");
 
         when(amazonSQSClient.sendMessage(any(SendMessageRequest.class)))
-                .thenReturn(new SendMessageResult().withMessageId(MESSAGE_ID_1))
-                .thenReturn(new SendMessageResult().withMessageId(MESSAGE_ID_2));
+                .thenReturn(SendMessageResponse.builder().messageId(MESSAGE_ID_1).build())
+                .thenReturn(SendMessageResponse.builder().messageId(MESSAGE_ID_2).build());
 
         producer.sendInternal(destination, msg);
 
@@ -704,22 +704,22 @@ public class SQSMessageProducerTest {
     @Test
     public void testSetDeliveryDelay() throws JMSException {
         assertEquals(0, producer.getDeliveryDelay());
-        
+
         producer.setDeliveryDelay(2000);
-        
+
         assertEquals(2000, producer.getDeliveryDelay());
-        
+
         ArgumentCaptor<SendMessageRequest> requestCaptor = ArgumentCaptor.forClass(SendMessageRequest.class);
         when(amazonSQSClient.sendMessage(requestCaptor.capture()))
-            .thenReturn(new SendMessageResult().withMessageId(MESSAGE_ID_1));
+                .thenReturn(SendMessageResponse.builder().messageId(MESSAGE_ID_1).build());
 
         SQSTextMessage msg = new SQSTextMessage("Sorry I'm late!");
         producer.send(msg);
-        
-        assertEquals(2, requestCaptor.getValue().getDelaySeconds().intValue());
+
+        assertEquals(2, requestCaptor.getValue().delaySeconds().intValue());
     }
-    
-    
+
+
     @Test
     public void testSetDeliveryDelayInvalidDelays() throws JMSException {
         try {
@@ -728,14 +728,14 @@ public class SQSMessageProducerTest {
         } catch (IllegalArgumentException ide) {
             // expected
         }
-        
+
         try {
             producer.setDeliveryDelay(TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS));
             fail();
         } catch (IllegalArgumentException ide) {
             // expected
         }
-        
+
         try {
             producer.setDeliveryDelay(20);
             fail();
@@ -743,12 +743,13 @@ public class SQSMessageProducerTest {
             // expected
         }
     }
-    
-    
+
+
     private Map<String, MessageAttributeValue> createMessageAttribute(String type) {
-        MessageAttributeValue messageAttributeValue = new MessageAttributeValue();
-        messageAttributeValue.setDataType("String");
-        messageAttributeValue.setStringValue(type);
+        MessageAttributeValue messageAttributeValue = MessageAttributeValue.builder()
+                .dataType("String")
+                .stringValue(type)
+                .build();
 
         Map<String, MessageAttributeValue> messageAttributes = new HashMap<String, MessageAttributeValue>();
         messageAttributes.put(SQSMessage.JMS_SQS_MESSAGE_TYPE, messageAttributeValue);
@@ -775,10 +776,10 @@ public class SQSMessageProducerTest {
                 return false;
             }
 
-            SendMessageRequest reqeust = (SendMessageRequest)argument;
-            assertEquals(queueUrl, reqeust.getQueueUrl());
-            assertTrue(messagesBody.contains(reqeust.getMessageBody()));
-            assertEquals(messageAttributes , reqeust.getMessageAttributes());
+            SendMessageRequest reqeust = (SendMessageRequest) argument;
+            assertEquals(queueUrl, reqeust.queueUrl());
+            assertTrue(messagesBody.contains(reqeust.messageBody()));
+            assertEquals(messageAttributes, reqeust.messageAttributes());
             return true;
         }
     }

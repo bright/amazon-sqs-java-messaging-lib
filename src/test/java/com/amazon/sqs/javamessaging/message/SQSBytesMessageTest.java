@@ -47,10 +47,9 @@ import org.junit.Test;
 
 import com.amazon.sqs.javamessaging.SQSMessagingClientConstants;
 import com.amazon.sqs.javamessaging.SQSSession;
-import com.amazon.sqs.javamessaging.message.SQSBytesMessage;
-import com.amazonaws.util.Base64;
-
-import com.amazonaws.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
+import software.amazon.awssdk.utils.BinaryUtils;
 
 /**
  * Test the SQSBytesMessageTest class
@@ -59,10 +58,10 @@ public class SQSBytesMessageTest {
     
     private SQSSession mockSQSSession;
     
-    private final static Map<String, String> MESSAGE_SYSTEM_ATTRIBUTES;
+    private final static Map<MessageSystemAttributeName, String> MESSAGE_SYSTEM_ATTRIBUTES;
     static {
-        MESSAGE_SYSTEM_ATTRIBUTES = new HashMap<String,String>();
-        MESSAGE_SYSTEM_ATTRIBUTES.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "1");
+        MESSAGE_SYSTEM_ATTRIBUTES = new HashMap<MessageSystemAttributeName,String>();
+        MESSAGE_SYSTEM_ATTRIBUTES.put(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "1");
     }
 
     @Before 
@@ -103,10 +102,10 @@ public class SQSBytesMessageTest {
             fail("failed to readByte");
         }
 
-        Message message = new Message();
-        message.setBody(Base64.encodeAsString(body));
+        Message message = Message.builder()
+                .body(BinaryUtils.toBase64(body))
+                .attributes(MESSAGE_SYSTEM_ATTRIBUTES).build();
         
-        message.setAttributes(MESSAGE_SYSTEM_ATTRIBUTES);
         SQSBytesMessage receivedByteMsg = new SQSBytesMessage(null, "", message);
         byte[] byteArray1 = new byte[4];
         receivedByteMsg.readBytes(byteArray1);
@@ -425,10 +424,10 @@ public class SQSBytesMessageTest {
             fail("failed to readByte");
         }
 
-        Message message = new Message();
-        message.setBody(Base64.encodeAsString(body));
+        Message message = Message.builder()
+                .body(BinaryUtils.toBase64(body))
+                .attributes(MESSAGE_SYSTEM_ATTRIBUTES).build();
 
-        message.setAttributes(MESSAGE_SYSTEM_ATTRIBUTES);
         SQSBytesMessage receivedByteMsg = new SQSBytesMessage(null, "", message);
         byte[] byteArray1 = new byte[4];
         receivedByteMsg.readBytes(byteArray1);

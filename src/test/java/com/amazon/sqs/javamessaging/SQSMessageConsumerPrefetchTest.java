@@ -74,10 +74,8 @@ import com.amazon.sqs.javamessaging.message.SQSMessage;
 import com.amazon.sqs.javamessaging.message.SQSObjectMessage;
 import com.amazon.sqs.javamessaging.message.SQSTextMessage;
 import com.amazon.sqs.javamessaging.util.ExponentialBackoffStrategy;
-import com.amazonaws.services.sqs.model.MessageAttributeValue;
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
-import com.amazonaws.services.sqs.model.ReceiveMessageResult;
-import com.amazonaws.util.Base64;
+import software.amazon.awssdk.services.sqs.model.*;
+import software.amazon.awssdk.utils.BinaryUtils;
 
 /**
  * Test the SQSMessageConsumerPrefetchTest class
@@ -88,13 +86,13 @@ public class SQSMessageConsumerPrefetchTest {
 
     private static final String NAMESPACE = "123456789012";
     private static final String QUEUE_NAME = "QueueName";
-    private static final  String QUEUE_URL = NAMESPACE + "/" + QUEUE_NAME;
-    
+    private static final String QUEUE_URL = NAMESPACE + "/" + QUEUE_NAME;
+
     @Parameters
     public static List<Object[]> getParameters() {
-        return Arrays.asList(new Object[][] { {0}, {1}, {5}, {10}, {15} });
+        return Arrays.asList(new Object[][]{{0}, {1}, {5}, {10}, {15}});
     }
-   
+
     private final int numberOfMessagesToPrefetch;
 
     private Acknowledger acknowledger;
@@ -109,7 +107,7 @@ public class SQSMessageConsumerPrefetchTest {
     public SQSMessageConsumerPrefetchTest(int numberOfMessagesToPrefetch) {
         this.numberOfMessagesToPrefetch = numberOfMessagesToPrefetch;
     }
-    
+
     @Before
     public void setup() {
 
@@ -154,16 +152,16 @@ public class SQSMessageConsumerPrefetchTest {
         for (int i = 0; i < numMessages; ++i) {
             receipt.add("r" + i);
         }
-        ReceiveMessageResult receivedMessageResult = createReceiveMessageResult(receipt);
+        ReceiveMessageResponse receivedMessageResult = createReceiveMessageResult(receipt);
 
         // Mock SQS call for receive message and return messages
         int receiveMessageLimit = Math.min(10, numMessages);
         when(amazonSQSClient.receiveMessage(
-                eq(new ReceiveMessageRequest(QUEUE_URL)
-                        .withMaxNumberOfMessages(receiveMessageLimit)
-                        .withAttributeNames(SQSMessageConsumerPrefetch.ALL)
-                        .withMessageAttributeNames(SQSMessageConsumerPrefetch.ALL)
-                        .withWaitTimeSeconds(SQSMessageConsumerPrefetch.WAIT_TIME_SECONDS))))
+                eq(ReceiveMessageRequest.builder().queueUrl(QUEUE_URL)
+                        .maxNumberOfMessages(receiveMessageLimit)
+                        .attributeNamesWithStrings(SQSMessageConsumerPrefetch.ALL)
+                        .messageAttributeNames(SQSMessageConsumerPrefetch.ALL)
+                        .waitTimeSeconds(SQSMessageConsumerPrefetch.WAIT_TIME_SECONDS)).build()))
                 .thenReturn(receivedMessageResult);
 
         // Mock isClosed and exit after a single prefetch loop
@@ -179,10 +177,10 @@ public class SQSMessageConsumerPrefetchTest {
                         //after we return 'isClosed() == true' we will empty the prefetch queue while nacking messages
                         assertEquals(numMessages, consumerPrefetch.messageQueue.size());
                         for (SQSMessageConsumerPrefetch.MessageManager messageManager : consumerPrefetch.messageQueue) {
-                            SQSMessage sqsMessage = (SQSMessage)messageManager.getMessage();
+                            SQSMessage sqsMessage = (SQSMessage) messageManager.getMessage();
                             assertTrue(receipt.contains(sqsMessage.getReceiptHandle()));
                         }
-                        
+
                         return true;
                     }
                 });
@@ -191,7 +189,7 @@ public class SQSMessageConsumerPrefetchTest {
          * Request a message (only relevant when prefetching is off).
          */
         consumerPrefetch.requestMessage();
-        
+
         /*
          * Run the prefetch
          */
@@ -216,7 +214,7 @@ public class SQSMessageConsumerPrefetchTest {
         // Ensure message queue was filled with expected messages
         assertEquals(numMessages, consumerPrefetch.messageQueue.size());
         for (SQSMessageConsumerPrefetch.MessageManager messageManager : consumerPrefetch.messageQueue) {
-            SQSMessage sqsMessage = (SQSMessage)messageManager.getMessage();
+            SQSMessage sqsMessage = (SQSMessage) messageManager.getMessage();
             assertTrue(receipt.contains(sqsMessage.getReceiptHandle()));
         }
     }
@@ -548,7 +546,7 @@ public class SQSMessageConsumerPrefetchTest {
         MessageListener msgListener = mock(MessageListener.class);
         consumerPrefetch.running = true;
         consumerPrefetch.setMessageListener(msgListener);
-              
+
         assertTrue(consumerPrefetch.messageQueue.isEmpty());
 
         List<MessageManager> expectedList = new ArrayList<MessageManager>();
@@ -855,17 +853,17 @@ public class SQSMessageConsumerPrefetchTest {
         /*
          * Set up consumer prefetch and mocks
          */
-        Map<String,String> mapAttributes = new HashMap<String, String>();
-        mapAttributes.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "1");
+        Map<MessageSystemAttributeName, String> mapAttributes = new HashMap<MessageSystemAttributeName, String>();
+        mapAttributes.put(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "1");
 
-        com.amazonaws.services.sqs.model.Message message = mock(com.amazonaws.services.sqs.model.Message.class);
+        software.amazon.awssdk.services.sqs.model.Message message = mock(software.amazon.awssdk.services.sqs.model.Message.class);
 
         // Return message attribute with no message type attribute
-        when(message.getMessageAttributes())
+        when(message.messageAttributes())
                 .thenReturn(new HashMap<String, MessageAttributeValue>());
-        when(message.getAttributes())
+        when(message.attributes())
                 .thenReturn(mapAttributes);
-        when(message.getBody())
+        when(message.body())
                 .thenReturn("MessageBody");
 
         /*
@@ -890,23 +888,24 @@ public class SQSMessageConsumerPrefetchTest {
          * Set up consumer prefetch and mocks
          */
 
-        Map<String,MessageAttributeValue> mapMessageAttributes = new HashMap<String, MessageAttributeValue>();
-        MessageAttributeValue messageAttributeValue = new MessageAttributeValue();
-        messageAttributeValue.setStringValue(SQSMessage.BYTE_MESSAGE_TYPE);
-        messageAttributeValue.setDataType(SQSMessagingClientConstants.STRING);
+        Map<String, MessageAttributeValue> mapMessageAttributes = new HashMap<String, MessageAttributeValue>();
+        MessageAttributeValue messageAttributeValue = MessageAttributeValue.builder()
+                .stringValue(SQSMessage.BYTE_MESSAGE_TYPE)
+                .dataType(SQSMessagingClientConstants.STRING)
+                .build();
         mapMessageAttributes.put(SQSMessage.JMS_SQS_MESSAGE_TYPE, messageAttributeValue);
 
-        Map<String, String> mapAttributes = new HashMap<String, String>();
-        mapAttributes.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "1");
+        Map<MessageSystemAttributeName, String> mapAttributes = new HashMap<MessageSystemAttributeName, String>();
+        mapAttributes.put(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "1");
 
-        com.amazonaws.services.sqs.model.Message message = mock(com.amazonaws.services.sqs.model.Message.class);
+        software.amazon.awssdk.services.sqs.model.Message message = mock(software.amazon.awssdk.services.sqs.model.Message.class);
 
         // Return message attributes with message type 'BYTE'
-        when(message.getMessageAttributes()).thenReturn(mapMessageAttributes);
-        when(message.getAttributes()).thenReturn(mapAttributes);
+        when(message.messageAttributes()).thenReturn(mapMessageAttributes);
+        when(message.attributes()).thenReturn(mapAttributes);
 
-        byte[] byteArray = new byte[] { 1, 0, 'a', 65 };
-        when(message.getBody()).thenReturn(Base64.encodeAsString(byteArray));
+        byte[] byteArray = new byte[]{1, 0, 'a', 65};
+        when(message.body()).thenReturn(BinaryUtils.toBase64(byteArray));
 
         /*
          * Convert the SQS message to JMS Message
@@ -918,7 +917,7 @@ public class SQSMessageConsumerPrefetchTest {
          */
         assertTrue(jsmMessage instanceof SQSBytesMessage);
         for (byte b : byteArray) {
-            assertEquals(b, ((SQSBytesMessage)jsmMessage).readByte());
+            assertEquals(b, ((SQSBytesMessage) jsmMessage).readByte());
         }
     }
 
@@ -932,23 +931,23 @@ public class SQSMessageConsumerPrefetchTest {
          * Set up consumer prefetch and mocks
          */
 
-        Map<String,MessageAttributeValue> mapMessageAttributes = new HashMap<String, MessageAttributeValue>();
+        Map<String, MessageAttributeValue> mapMessageAttributes = new HashMap<String, MessageAttributeValue>();
 
-        MessageAttributeValue messageAttributeValue = new MessageAttributeValue();
-        messageAttributeValue.setStringValue(SQSMessage.BYTE_MESSAGE_TYPE);
-        messageAttributeValue.setDataType(SQSMessagingClientConstants.STRING);
+        MessageAttributeValue messageAttributeValue = MessageAttributeValue.builder()
+        .stringValue(SQSMessage.BYTE_MESSAGE_TYPE)
+        .dataType(SQSMessagingClientConstants.STRING).build();
         mapMessageAttributes.put(SQSMessage.JMS_SQS_MESSAGE_TYPE, messageAttributeValue);
 
-        Map<String, String> mapAttributes = new HashMap<String, String>();
-        mapAttributes.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "1");
+        Map<MessageSystemAttributeName, String> mapAttributes = new HashMap<MessageSystemAttributeName, String>();
+        mapAttributes.put(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "1");
 
-        com.amazonaws.services.sqs.model.Message message = mock(com.amazonaws.services.sqs.model.Message.class);
+        software.amazon.awssdk.services.sqs.model.Message message = mock(software.amazon.awssdk.services.sqs.model.Message.class);
 
         // Return message attributes with message type 'BYTE'
-        when(message.getMessageAttributes()).thenReturn(mapMessageAttributes);
-        when(message.getAttributes()).thenReturn(mapAttributes);
+        when(message.messageAttributes()).thenReturn(mapMessageAttributes);
+        when(message.attributes()).thenReturn(mapAttributes);
         // Return illegal message body for byte message type
-        when(message.getBody()).thenReturn("Text Message");
+        when(message.body()).thenReturn("Text Message");
 
         /*
          * Convert the SQS message to JMS Message
@@ -971,15 +970,16 @@ public class SQSMessageConsumerPrefetchTest {
          * Set up consumer prefetch and mocks
          */
 
-        Map<String,MessageAttributeValue> mapMessageAttributes = new HashMap<String, MessageAttributeValue>();
+        Map<String, MessageAttributeValue> mapMessageAttributes = new HashMap<String, MessageAttributeValue>();
 
-        MessageAttributeValue messageAttributeValue = new MessageAttributeValue();
-        messageAttributeValue.setStringValue(SQSMessage.OBJECT_MESSAGE_TYPE);
-        messageAttributeValue.setDataType(SQSMessagingClientConstants.STRING);
+        MessageAttributeValue messageAttributeValue = MessageAttributeValue.builder()
+                .stringValue(SQSMessage.OBJECT_MESSAGE_TYPE)
+                .dataType(SQSMessagingClientConstants.STRING)
+                .build();
         mapMessageAttributes.put(SQSMessage.JMS_SQS_MESSAGE_TYPE, messageAttributeValue);
 
-        Map<String, String> mapAttributes = new HashMap<String, String>();
-        mapAttributes.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "1");
+        Map<MessageSystemAttributeName, String> mapAttributes = new HashMap<MessageSystemAttributeName, String>();
+        mapAttributes.put(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "1");
 
         // Encode an object to byte array
         Integer integer = new Integer("10");
@@ -988,11 +988,11 @@ public class SQSMessageConsumerPrefetchTest {
         oStream.writeObject(integer);
         oStream.close();
 
-        com.amazonaws.services.sqs.model.Message message = mock(com.amazonaws.services.sqs.model.Message.class);
+        software.amazon.awssdk.services.sqs.model.Message message = mock(software.amazon.awssdk.services.sqs.model.Message.class);
         // Return message attributes with message type 'OBJECT'
-        when(message.getMessageAttributes()).thenReturn(mapMessageAttributes);
-        when(message.getAttributes()).thenReturn(mapAttributes);
-        when(message.getBody()).thenReturn(Base64.encodeAsString(array.toByteArray()));
+        when(message.messageAttributes()).thenReturn(mapMessageAttributes);
+        when(message.attributes()).thenReturn(mapAttributes);
+        when(message.body()).thenReturn(BinaryUtils.toBase64(array.toByteArray()));
 
         /*
          * Convert the SQS message to JMS Message
@@ -1016,21 +1016,22 @@ public class SQSMessageConsumerPrefetchTest {
          * Set up consumer prefetch and mocks
          */
 
-        Map<String,MessageAttributeValue> mapMessageAttributes = new HashMap<String, MessageAttributeValue>();
+        Map<String, MessageAttributeValue> mapMessageAttributes = new HashMap<String, MessageAttributeValue>();
 
-        MessageAttributeValue messageAttributeValue = new MessageAttributeValue();
-        messageAttributeValue.setStringValue(SQSMessage.OBJECT_MESSAGE_TYPE);
-        messageAttributeValue.setDataType(SQSMessagingClientConstants.STRING);
+        MessageAttributeValue messageAttributeValue = MessageAttributeValue.builder()
+                .stringValue(SQSMessage.OBJECT_MESSAGE_TYPE)
+                .dataType(SQSMessagingClientConstants.STRING)
+                .build();
         mapMessageAttributes.put(SQSMessage.JMS_SQS_MESSAGE_TYPE, messageAttributeValue);
 
-        Map<String, String> mapAttributes = new HashMap<String, String>();
-        mapAttributes.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "1");
+        Map<MessageSystemAttributeName, String> mapAttributes = new HashMap<MessageSystemAttributeName, String>();
+        mapAttributes.put(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "1");
 
-        com.amazonaws.services.sqs.model.Message message = mock(com.amazonaws.services.sqs.model.Message.class);
+        software.amazon.awssdk.services.sqs.model.Message message = mock(software.amazon.awssdk.services.sqs.model.Message.class);
         // Return message attributes with message type 'OBJECT'
-        when(message.getMessageAttributes()).thenReturn(mapMessageAttributes);
-        when(message.getAttributes()).thenReturn(mapAttributes);
-        when(message.getBody()).thenReturn("Some text that does not represent an object");
+        when(message.messageAttributes()).thenReturn(mapMessageAttributes);
+        when(message.attributes()).thenReturn(mapAttributes);
+        when(message.body()).thenReturn("Some text that does not represent an object");
 
         /*
          * Convert the SQS message to JMS Message
@@ -1058,20 +1059,22 @@ public class SQSMessageConsumerPrefetchTest {
          * Set up consumer prefetch and mocks
          */
 
-        Map<String,MessageAttributeValue> mapMessageAttributes = new HashMap<String, MessageAttributeValue>();
-        MessageAttributeValue messageAttributeValue = new MessageAttributeValue();
-        messageAttributeValue.setStringValue(SQSMessage.TEXT_MESSAGE_TYPE);
-        messageAttributeValue.setDataType(SQSMessagingClientConstants.STRING);
+        Map<String, MessageAttributeValue> mapMessageAttributes = new HashMap<String, MessageAttributeValue>();
+
+        MessageAttributeValue messageAttributeValue = MessageAttributeValue.builder()
+                .stringValue(SQSMessage.TEXT_MESSAGE_TYPE)
+                .dataType(SQSMessagingClientConstants.STRING)
+                .build();
         mapMessageAttributes.put(SQSMessage.JMS_SQS_MESSAGE_TYPE, messageAttributeValue);
 
-        Map<String, String> mapAttributes = new HashMap<String, String>();
-        mapAttributes.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "1");
+        Map<MessageSystemAttributeName, String> mapAttributes = new HashMap<MessageSystemAttributeName, String>();
+        mapAttributes.put(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "1");
 
-        com.amazonaws.services.sqs.model.Message message = mock(com.amazonaws.services.sqs.model.Message.class);
+        software.amazon.awssdk.services.sqs.model.Message message = mock(software.amazon.awssdk.services.sqs.model.Message.class);
         // Return message attributes with message type 'TEXT'
-        when(message.getMessageAttributes()).thenReturn(mapMessageAttributes);
-        when(message.getAttributes()).thenReturn(mapAttributes);
-        when(message.getBody()).thenReturn("MessageBody");
+        when(message.messageAttributes()).thenReturn(mapMessageAttributes);
+        when(message.attributes()).thenReturn(mapAttributes);
+        when(message.body()).thenReturn("MessageBody");
 
         /*
          * Convert the SQS message to JMS Message
@@ -1082,7 +1085,7 @@ public class SQSMessageConsumerPrefetchTest {
          * Verify results
          */
         assertTrue(jsmMessage instanceof SQSTextMessage);
-        assertEquals(message.getBody(), "MessageBody");
+        assertEquals(message.body(), "MessageBody");
     }
 
     /**
@@ -1096,11 +1099,11 @@ public class SQSMessageConsumerPrefetchTest {
         assertNull(consumerPrefetch.receive());
         // Ensure the messagesRequested counter is reset correctly
         assertEquals(0, consumerPrefetch.messagesRequested);
-        
+
         assertNull(consumerPrefetch.receive(100));
         // Ensure the messagesRequested counter is reset correctly
         assertEquals(0, consumerPrefetch.messagesRequested);
-        
+
         assertNull(consumerPrefetch.receiveNoWait());
         // Ensure the messagesRequested counter is reset correctly
         assertEquals(0, consumerPrefetch.messagesRequested);
@@ -1117,11 +1120,11 @@ public class SQSMessageConsumerPrefetchTest {
         assertNull(consumerPrefetch.receive());
         // Ensure the messagesRequested counter is reset correctly
         assertEquals(0, consumerPrefetch.messagesRequested);
-        
+
         assertNull(consumerPrefetch.receive(100));
         // Ensure the messagesRequested counter is reset correctly
         assertEquals(0, consumerPrefetch.messagesRequested);
-        
+
         assertNull(consumerPrefetch.receiveNoWait());
         // Ensure the messagesRequested counter is reset correctly
         assertEquals(0, consumerPrefetch.messagesRequested);
@@ -1145,7 +1148,7 @@ public class SQSMessageConsumerPrefetchTest {
         /*
          * Call receive messages
          */
-        SQSMessage msg = (SQSMessage)consumerPrefetch.receive();
+        SQSMessage msg = (SQSMessage) consumerPrefetch.receive();
 
         /*
          * Verify results
@@ -1153,7 +1156,7 @@ public class SQSMessageConsumerPrefetchTest {
         receiptHandlers.contains(msg.getReceiptHandle());
         verify(acknowledger).notifyMessageReceived(msg);
         verify(consumerPrefetch, times(2)).notifyStateChange();
-        
+
         // Ensure the messagesRequested counter is reset correctly
         assertEquals(0, consumerPrefetch.messagesRequested);
     }
@@ -1176,7 +1179,7 @@ public class SQSMessageConsumerPrefetchTest {
         /*
          * Call receive messages
          */
-        SQSMessage msg = (SQSMessage)consumerPrefetch.receiveNoWait();
+        SQSMessage msg = (SQSMessage) consumerPrefetch.receiveNoWait();
 
         /*
          * Verify results
@@ -1184,7 +1187,7 @@ public class SQSMessageConsumerPrefetchTest {
         receiptHandlers.contains(msg.getReceiptHandle());
         verify(acknowledger).notifyMessageReceived(msg);
         verify(consumerPrefetch, times(2)).notifyStateChange();
-        
+
         // Ensure the messagesRequested counter is reset correctly
         assertEquals(0, consumerPrefetch.messagesRequested);
     }
@@ -1233,7 +1236,7 @@ public class SQSMessageConsumerPrefetchTest {
 
         // Validate that after session is closed receive returns null
         assertEquals(true, noMessageReturned.get());
-        
+
         // Ensure the messagesRequested counter is reset correctly
         assertEquals(0, consumerPrefetch.messagesRequested);
     }
@@ -1287,7 +1290,7 @@ public class SQSMessageConsumerPrefetchTest {
 
         // Validate that after adding a single message it was receive correctly
         assertEquals(true, messageReceived.get());
-        
+
         // Ensure the messagesRequested counter is reset correctly
         assertEquals(0, consumerPrefetch.messagesRequested);
     }
@@ -1314,13 +1317,13 @@ public class SQSMessageConsumerPrefetchTest {
         assertNull(msg);
 
         // verify that we did not exit early
-        long measuredTime = System.currentTimeMillis() - startTime; 
+        long measuredTime = System.currentTimeMillis() - startTime;
         assertTrue(String.format("Expected wait time = %1$s ms and has to be less than or equal to measured time = %2$s ms", waitTime, measuredTime), waitTime <= measuredTime);
-        
+
         // Ensure the messagesRequested counter is reset correctly
         assertEquals(0, consumerPrefetch.messagesRequested);
     }
-    
+
     /**
      * Test received messages with timeout
      */
@@ -1334,9 +1337,9 @@ public class SQSMessageConsumerPrefetchTest {
 
         if (numberOfMessagesToPrefetch == 0) {
             when(amazonSQSClient.receiveMessage(any(ReceiveMessageRequest.class)))
-                    .thenReturn(new ReceiveMessageResult());
+                    .thenReturn(ReceiveMessageResponse.builder().build());
         }
-        
+
         /*
          * Call receive messages
          */
@@ -1354,7 +1357,7 @@ public class SQSMessageConsumerPrefetchTest {
     @Test
     public void testProcessReceivedMessagesEmptyInput() {
 
-        consumerPrefetch.processReceivedMessages(new ArrayList<com.amazonaws.services.sqs.model.Message>());
+        consumerPrefetch.processReceivedMessages(new ArrayList<software.amazon.awssdk.services.sqs.model.Message>());
         verifyNoMoreInteractions(sqsSessionRunnable);
     }
 
@@ -1364,11 +1367,11 @@ public class SQSMessageConsumerPrefetchTest {
     @Test
     public void testProcessReceivedMessages() throws JMSException {
 
-        Map<String,String> mapAttributes = new HashMap<String, String>();
+        Map<String, String> mapAttributes = new HashMap<String, String>();
         mapAttributes.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "1");
 
         List<String> receiptHandlers = createReceiptHandlersList(3);
-        List<com.amazonaws.services.sqs.model.Message> messages = createSQSServiceMessages(receiptHandlers);
+        List<software.amazon.awssdk.services.sqs.model.Message> messages = createSQSServiceMessages(receiptHandlers);
 
         /*
          * Process messages
@@ -1383,7 +1386,7 @@ public class SQSMessageConsumerPrefetchTest {
 
         while (!consumerPrefetch.messageQueue.isEmpty()) {
             SQSMessageConsumerPrefetch.MessageManager msgManager = consumerPrefetch.messageQueue.pollFirst();
-            SQSMessage msg = (SQSMessage)msgManager.getMessage();
+            SQSMessage msg = (SQSMessage) msgManager.getMessage();
             receiptHandlers.contains(msg.getReceiptHandle());
         }
 
@@ -1404,12 +1407,12 @@ public class SQSMessageConsumerPrefetchTest {
         consumerPrefetch.setMessageListener(msgListener);
 
         // Create messages
-        Map<String,String> mapAttributes = new HashMap<String, String>();
+        Map<String, String> mapAttributes = new HashMap<String, String>();
         mapAttributes.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "1");
 
         List<String> receiptHandlers = createReceiptHandlersList(3);
 
-        List<com.amazonaws.services.sqs.model.Message> messages = createSQSServiceMessages(receiptHandlers);
+        List<software.amazon.awssdk.services.sqs.model.Message> messages = createSQSServiceMessages(receiptHandlers);
 
         /*
          * Process messages
@@ -1441,12 +1444,12 @@ public class SQSMessageConsumerPrefetchTest {
          */
 
         // Create messages
-        Map<String,String> mapAttributes = new HashMap<String, String>();
+        Map<String, String> mapAttributes = new HashMap<String, String>();
         mapAttributes.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "1");
 
         List<String> receiptHandlers = createReceiptHandlersList(3);
 
-        List<com.amazonaws.services.sqs.model.Message> messages = createSQSServiceMessages(receiptHandlers);
+        List<software.amazon.awssdk.services.sqs.model.Message> messages = createSQSServiceMessages(receiptHandlers);
 
         when(consumerPrefetch.convertToJMSMessage(messages.get(1)))
                 .thenThrow(new JMSException("Exception"));
@@ -1488,11 +1491,11 @@ public class SQSMessageConsumerPrefetchTest {
                 .when(negativeAcknowledger).action(eq(QUEUE_URL), any(List.class));
 
         // Create messages
-        Map<String,String> mapAttributes = new HashMap<String, String>();
+        Map<String, String> mapAttributes = new HashMap<String, String>();
         mapAttributes.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "1");
 
         List<String> receiptHandlers = createReceiptHandlersList(3);
-        List<com.amazonaws.services.sqs.model.Message> messages = createSQSServiceMessages(receiptHandlers);
+        List<software.amazon.awssdk.services.sqs.model.Message> messages = createSQSServiceMessages(receiptHandlers);
 
         /*
          * Process messages
@@ -1525,21 +1528,21 @@ public class SQSMessageConsumerPrefetchTest {
         int prefetchBatchSize = 5;
         consumerPrefetch.retriesAttempted = 5;
 
-        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(QUEUE_URL)
-                .withMaxNumberOfMessages(prefetchBatchSize)
-                .withAttributeNames(SQSMessageConsumerPrefetch.ALL)
-                .withMessageAttributeNames(SQSMessageConsumerPrefetch.ALL)
-                .withWaitTimeSeconds(SQSMessageConsumerPrefetch.WAIT_TIME_SECONDS);
+        ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder().queueUrl(QUEUE_URL)
+                .maxNumberOfMessages(prefetchBatchSize)
+                .attributeNames(QueueAttributeName.ALL)
+                .messageAttributeNames(SQSMessageConsumerPrefetch.ALL)
+                .waitTimeSeconds(SQSMessageConsumerPrefetch.WAIT_TIME_SECONDS).build();
 
-        List<com.amazonaws.services.sqs.model.Message> messages = new ArrayList<com.amazonaws.services.sqs.model.Message>();
-        messages.add(new com.amazonaws.services.sqs.model.Message().withReceiptHandle("r1"));
-        messages.add(new com.amazonaws.services.sqs.model.Message().withReceiptHandle("r2"));
-        messages.add(new com.amazonaws.services.sqs.model.Message().withReceiptHandle("r3"));
-        messages.add(new com.amazonaws.services.sqs.model.Message().withReceiptHandle("r4"));
-        messages.add(new com.amazonaws.services.sqs.model.Message().withReceiptHandle("r5"));
+        List<software.amazon.awssdk.services.sqs.model.Message> messages = new ArrayList<software.amazon.awssdk.services.sqs.model.Message>();
+        messages.add(software.amazon.awssdk.services.sqs.model.Message.builder().receiptHandle("r1").build());
+        messages.add(software.amazon.awssdk.services.sqs.model.Message.builder().receiptHandle("r2").build());
+        messages.add(software.amazon.awssdk.services.sqs.model.Message.builder().receiptHandle("r3").build());
+        messages.add(software.amazon.awssdk.services.sqs.model.Message.builder().receiptHandle("r4").build());
+        messages.add(software.amazon.awssdk.services.sqs.model.Message.builder().receiptHandle("r5").build());
 
-        ReceiveMessageResult receivedMessageResult =
-                new ReceiveMessageResult().withMessages(messages);
+        ReceiveMessageResponse receivedMessageResult =
+                ReceiveMessageResponse.builder().messages(messages).build();
 
         when(amazonSQSClient.receiveMessage(receiveMessageRequest))
                 .thenReturn(receivedMessageResult);
@@ -1547,7 +1550,7 @@ public class SQSMessageConsumerPrefetchTest {
         /*
          * Get messages
          */
-        List<com.amazonaws.services.sqs.model.Message> result = consumerPrefetch.getMessagesWithBackoff(prefetchBatchSize);
+        List<software.amazon.awssdk.services.sqs.model.Message> result = consumerPrefetch.getMessagesWithBackoff(prefetchBatchSize);
 
         /*
          * Verify results
@@ -1566,14 +1569,14 @@ public class SQSMessageConsumerPrefetchTest {
         try {
             consumerPrefetch.getMessages(negativeSize, 0);
             fail();
-        } catch(AssertionError ae) {
+        } catch (AssertionError ae) {
             // expected exception
         }
 
         try {
             consumerPrefetch.getMessages(0, 0);
             fail();
-        } catch(AssertionError ae) {
+        } catch (AssertionError ae) {
             // expected exception
         }
     }
@@ -1856,23 +1859,23 @@ public class SQSMessageConsumerPrefetchTest {
         int concurrentReceives = 3;
         int receiveBatchSize = Math.min(SQSMessagingClientConstants.MAX_BATCH,
                 Math.max(concurrentReceives, numberOfMessagesToPrefetch));
-        
+
         // Create messages return from SQS
         final List<String> receipt = new ArrayList<String>();
         for (int i = 0; i < receiveBatchSize; ++i) {
             receipt.add("r" + i);
         }
-        ReceiveMessageResult receivedMessageResult = createReceiveMessageResult(receipt);
+        ReceiveMessageResponse receivedMessageResult = createReceiveMessageResult(receipt);
 
         // Mock SQS call for receive message and return messages
         when(amazonSQSClient.receiveMessage(
-                eq(new ReceiveMessageRequest(QUEUE_URL)
-                        .withMaxNumberOfMessages(receiveBatchSize)
-                        .withAttributeNames(SQSMessageConsumerPrefetch.ALL)
-                        .withMessageAttributeNames(SQSMessageConsumerPrefetch.ALL)
-                        .withWaitTimeSeconds(SQSMessageConsumerPrefetch.WAIT_TIME_SECONDS))))
+                eq(ReceiveMessageRequest.builder().queueUrl(QUEUE_URL)
+                        .maxNumberOfMessages(receiveBatchSize)
+                        .attributeNames(QueueAttributeName.ALL)
+                        .messageAttributeNames(SQSMessageConsumerPrefetch.ALL)
+                        .waitTimeSeconds(SQSMessageConsumerPrefetch.WAIT_TIME_SECONDS)).build()))
                 .thenReturn(receivedMessageResult);
-        
+
         final CountDownLatch allReceivesWaiting = new CountDownLatch(concurrentReceives);
         doAnswer(new Answer<Object>() {
             @Override
@@ -1882,7 +1885,7 @@ public class SQSMessageConsumerPrefetchTest {
                 return null;
             }
         }).when(consumerPrefetch).requestMessage();
-        
+
         // Close the prefetcher immediately after completing one loop
         final List<Future<Message>> receivedMessageFutures = new ArrayList<Future<Message>>();
         doAnswer(new Answer<Object>() {
@@ -1896,10 +1899,10 @@ public class SQSMessageConsumerPrefetchTest {
                 return null;
             }
         }).when(consumerPrefetch).processReceivedMessages(any(List.class));
-        
+
         // Set running to true first so that the receive calls don't terminate early
         consumerPrefetch.running = true;
-        
+
         ExecutorService receiveExecutor = Executors.newFixedThreadPool(concurrentReceives);
         for (int i = 0; i < concurrentReceives; i++) {
             receivedMessageFutures.add(receiveExecutor.submit(new Callable<Message>() {
@@ -1909,13 +1912,13 @@ public class SQSMessageConsumerPrefetchTest {
                 }
             }));
         }
-        
+
         // Wait to make sure the receive calls have gotten far enough to
         // wait on the message queue
         allReceivesWaiting.await();
-        
+
         Assert.assertEquals(concurrentReceives, consumerPrefetch.messagesRequested);
-        
+
         consumerPrefetch.run();
     }
 
@@ -1941,15 +1944,15 @@ public class SQSMessageConsumerPrefetchTest {
 
     private void addMessagesToQueue(List<String> receiptHandlers) throws JMSException {
 
-        Map<String,String> mapAttributes = new HashMap<String, String>();
-        mapAttributes.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "1");
+        Map<MessageSystemAttributeName, String> mapAttributes = new HashMap<MessageSystemAttributeName, String>();
+        mapAttributes.put(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "1");
 
         for (String receiptHandler : receiptHandlers) {
 
             SQSMessageConsumerPrefetch.MessageManager msgManager = mock(SQSMessageConsumerPrefetch.MessageManager.class);
-            com.amazonaws.services.sqs.model.Message message =
-                    new com.amazonaws.services.sqs.model.Message().withReceiptHandle(receiptHandler)
-                            .withAttributes(mapAttributes);
+            software.amazon.awssdk.services.sqs.model.Message message =
+                    software.amazon.awssdk.services.sqs.model.Message.builder().receiptHandle(receiptHandler)
+                            .attributes(mapAttributes).build();
             Message m1 = consumerPrefetch.convertToJMSMessage(message);
             when(msgManager.getMessage()).thenReturn(m1);
 
@@ -1957,38 +1960,38 @@ public class SQSMessageConsumerPrefetchTest {
         }
     }
 
-    private List<com.amazonaws.services.sqs.model.Message>
+    private List<software.amazon.awssdk.services.sqs.model.Message>
     createSQSServiceMessages(List<String> receiptHandlers) throws JMSException {
 
-        Map<String,String> mapAttributes = new HashMap<String, String>();
-        mapAttributes.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "1");
+        Map<MessageSystemAttributeName, String> mapAttributes = new HashMap<MessageSystemAttributeName, String>();
+        mapAttributes.put(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "1");
 
-        List<com.amazonaws.services.sqs.model.Message> resultList =
-                new ArrayList<com.amazonaws.services.sqs.model.Message>();
+        List<software.amazon.awssdk.services.sqs.model.Message> resultList =
+                new ArrayList<software.amazon.awssdk.services.sqs.model.Message>();
 
         for (String receiptHandler : receiptHandlers) {
 
             resultList.add(
-                    new com.amazonaws.services.sqs.model.Message().withReceiptHandle(receiptHandler)
-                            .withAttributes(mapAttributes));
+                    software.amazon.awssdk.services.sqs.model.Message.builder().receiptHandle(receiptHandler)
+                            .attributes(mapAttributes).build());
         }
 
         return resultList;
     }
 
-    private ReceiveMessageResult createReceiveMessageResult(List<String> receiptList) {
+    private ReceiveMessageResponse createReceiveMessageResult(List<String> receiptList) {
 
-        Map<String,String> mapAttributes = new HashMap<String, String>();
-        mapAttributes.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "1");
+        Map<MessageSystemAttributeName, String> mapAttributes = new HashMap<MessageSystemAttributeName, String>();
+        mapAttributes.put(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "1");
 
-        List<com.amazonaws.services.sqs.model.Message> messages = new ArrayList<com.amazonaws.services.sqs.model.Message>();
+        List<software.amazon.awssdk.services.sqs.model.Message> messages = new ArrayList<software.amazon.awssdk.services.sqs.model.Message>();
         for (String receipt : receiptList) {
-            messages.add(new com.amazonaws.services.sqs.model.Message()
-                                                                .withReceiptHandle(receipt)
-                                                                .withAttributes(mapAttributes));
+            messages.add(software.amazon.awssdk.services.sqs.model.Message.builder()
+                    .receiptHandle(receipt)
+                    .attributes(mapAttributes).build());
         }
 
-        return new ReceiveMessageResult().withMessages(messages);
+        return ReceiveMessageResponse.builder().messages(messages).build();
     }
 
     private List<String> createReceiptHandlersList(int count) {

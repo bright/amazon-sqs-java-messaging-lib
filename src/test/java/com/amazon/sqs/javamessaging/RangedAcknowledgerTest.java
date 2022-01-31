@@ -28,18 +28,16 @@ import java.util.Map;
 
 import javax.jms.JMSException;
 
-import com.amazon.sqs.javamessaging.AmazonSQSMessagingClientWrapper;
-import com.amazon.sqs.javamessaging.SQSSession;
 import com.amazon.sqs.javamessaging.acknowledge.AcknowledgeMode;
 import com.amazon.sqs.javamessaging.acknowledge.SQSMessageIdentifier;
 import com.amazon.sqs.javamessaging.message.SQSMessage;
-import com.amazonaws.services.sqs.model.DeleteMessageBatchRequest;
 
 import junit.framework.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
 
 
 /**
@@ -109,11 +107,11 @@ public class RangedAcknowledgerTest extends AcknowledgerCommon {
         expectedCalls.put(baseQueueUrl + 2, queue2Calls);
         
         for (DeleteMessageBatchRequest request : argumentCaptor.getAllValues()) {
-            String queueUrl = request.getQueueUrl();
+            String queueUrl = request.queueUrl();
             List<Integer> expectedSequence = expectedCalls.get(queueUrl);
             assertNotNull(expectedSequence);
             assertTrue(expectedSequence.size() > 0);
-            assertEquals(expectedSequence.get(0).intValue(), request.getEntries().size());
+            assertEquals(expectedSequence.get(0).intValue(), request.entries().size());
             expectedSequence.remove(0);
             if (expectedSequence.isEmpty()) {
                 expectedCalls.remove(queueUrl);

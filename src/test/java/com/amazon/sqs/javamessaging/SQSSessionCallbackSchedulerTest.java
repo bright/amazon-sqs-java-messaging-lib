@@ -15,20 +15,12 @@
 package com.amazon.sqs.javamessaging;
 
 
-import com.amazon.sqs.javamessaging.AmazonSQSMessagingClientWrapper;
-import com.amazon.sqs.javamessaging.PrefetchManager;
-import com.amazon.sqs.javamessaging.SQSConnection;
-import com.amazon.sqs.javamessaging.SQSMessageConsumer;
-import com.amazon.sqs.javamessaging.SQSMessageConsumerPrefetch;
-import com.amazon.sqs.javamessaging.SQSSession;
-import com.amazon.sqs.javamessaging.SQSSessionCallbackScheduler;
 import com.amazon.sqs.javamessaging.acknowledge.AcknowledgeMode;
 import com.amazon.sqs.javamessaging.acknowledge.Acknowledger;
 import com.amazon.sqs.javamessaging.acknowledge.NegativeAcknowledger;
 import com.amazon.sqs.javamessaging.acknowledge.SQSMessageIdentifier;
 import com.amazon.sqs.javamessaging.message.SQSMessage;
 import com.amazon.sqs.javamessaging.message.SQSTextMessage;
-import com.amazonaws.services.sqs.model.Message;
 
 import javax.jms.JMSException;
 import javax.jms.MessageListener;
@@ -44,6 +36,8 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 
 import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
@@ -661,16 +655,19 @@ public class SQSSessionCallbackSchedulerTest {
     }
 
     private SQSMessageConsumerPrefetch.MessageManager createFifoMessageManager(String queueUrl, String groupId, String messageId, String receiptHandle) throws JMSException {
-        Message message = new Message();
-        message.setBody("body");
-        message.setMessageId(messageId);
-        message.setReceiptHandle(receiptHandle);
-        Map<String, String> attributes = new HashMap<String, String>();
-        attributes.put(SQSMessagingClientConstants.SEQUENCE_NUMBER, "728374687246872364");
-        attributes.put(SQSMessagingClientConstants.MESSAGE_DEDUPLICATION_ID, messageId);
-        attributes.put(SQSMessagingClientConstants.MESSAGE_GROUP_ID, groupId);
-        attributes.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "0");
-        message.setAttributes(attributes);
+        Map<MessageSystemAttributeName, String> attributes = new HashMap<MessageSystemAttributeName, String>();
+        attributes.put(MessageSystemAttributeName.SEQUENCE_NUMBER, "728374687246872364");
+        attributes.put(MessageSystemAttributeName.MESSAGE_DEDUPLICATION_ID, messageId);
+        attributes.put(MessageSystemAttributeName.MESSAGE_GROUP_ID, groupId);
+        attributes.put(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "0");
+
+        Message message = Message.builder()
+        .body("body")
+        .messageId(messageId)
+        .receiptHandle(receiptHandle)
+                .attributes(attributes)
+                .build();
+
         SQSMessage sqsMessage = new SQSTextMessage(acknowledger, queueUrl, message);
         PrefetchManager prefetchManager = mock(PrefetchManager.class);
         when(prefetchManager.getMessageConsumer())

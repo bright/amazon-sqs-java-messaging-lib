@@ -14,14 +14,8 @@
  */
 package com.amazon.sqs.javamessaging;
 
-import com.amazon.sqs.javamessaging.AmazonSQSMessagingClientWrapper;
-import com.amazon.sqs.javamessaging.PrefetchManager;
-import com.amazon.sqs.javamessaging.SQSMessageConsumerPrefetch;
-import com.amazon.sqs.javamessaging.acknowledge.AcknowledgeMode;
 import com.amazon.sqs.javamessaging.acknowledge.NegativeAcknowledger;
 import com.amazon.sqs.javamessaging.message.SQSMessage;
-import com.amazonaws.services.sqs.model.ChangeMessageVisibilityBatchRequest;
-import com.amazonaws.services.sqs.model.ChangeMessageVisibilityBatchRequestEntry;
 
 import javax.jms.JMSException;
 import java.util.ArrayDeque;
@@ -31,6 +25,8 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityBatchRequest;
+import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityBatchRequestEntry;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -127,12 +123,12 @@ public class NegativeAcknowledgerTest extends AcknowledgerCommon {
 
         assertEquals(1, argumentCaptor.getAllValues().size());
 
-        assertEquals(QUEUE_URL, argumentCaptor.getAllValues().get(0).getQueueUrl());
-        List<ChangeMessageVisibilityBatchRequestEntry> captureList =  argumentCaptor.getAllValues().get(0).getEntries();
+        assertEquals(QUEUE_URL, argumentCaptor.getAllValues().get(0).queueUrl());
+        List<ChangeMessageVisibilityBatchRequestEntry> captureList =  argumentCaptor.getAllValues().get(0).entries();
         assertEquals(receiptHandles.size(), captureList.size());
 
         for (ChangeMessageVisibilityBatchRequestEntry item : captureList) {
-            receiptHandles.contains(item.getReceiptHandle());
+            receiptHandles.contains(item.receiptHandle());
         }
     }
 

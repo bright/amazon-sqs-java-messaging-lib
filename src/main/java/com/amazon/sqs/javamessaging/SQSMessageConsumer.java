@@ -29,12 +29,12 @@ import javax.jms.MessageListener;
 import javax.jms.Queue;
 import javax.jms.QueueReceiver;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import com.amazon.sqs.javamessaging.acknowledge.Acknowledger;
 import com.amazon.sqs.javamessaging.acknowledge.NegativeAcknowledger;
 import com.amazon.sqs.javamessaging.acknowledge.SQSMessageIdentifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A client uses a MessageConsumer object to receive messages from a
@@ -51,7 +51,7 @@ import com.amazon.sqs.javamessaging.acknowledge.SQSMessageIdentifier;
  * improve the <code>receive</code> turn-around times.
  */
 public class SQSMessageConsumer implements MessageConsumer, QueueReceiver {
-    private static final Log LOG = LogFactory.getLog(SQSMessageConsumer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SQSMessageConsumer.class);
     public static final int PREFETCH_EXECUTOR_GRACEFUL_SHUTDOWN_TIME = 30;
 
     protected volatile boolean closed = false;

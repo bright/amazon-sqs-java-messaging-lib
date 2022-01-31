@@ -14,19 +14,17 @@
  */
 package com.amazon.sqs.javamessaging;
 
-import com.amazon.sqs.javamessaging.AmazonSQSMessagingClientWrapper;
-import com.amazon.sqs.javamessaging.SQSSession;
 import com.amazon.sqs.javamessaging.acknowledge.AcknowledgeMode;
 import com.amazon.sqs.javamessaging.acknowledge.AutoAcknowledger;
 import com.amazon.sqs.javamessaging.acknowledge.SQSMessageIdentifier;
 import com.amazon.sqs.javamessaging.message.SQSMessage;
-import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 
 import javax.jms.IllegalStateException;
 import java.util.Collections;
 import org.junit.Test;
 import org.junit.Before;
 import org.mockito.ArgumentCaptor;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -83,8 +81,8 @@ public class AutoAcknowledgerTest {
         assertEquals(1, argumentCaptor.getAllValues().size());
 
         DeleteMessageRequest input = argumentCaptor.getAllValues().get(0);
-        assertEquals(QUEUE_URL, input.getQueueUrl());
-        assertEquals(RECEIPT_HANDLE, input.getReceiptHandle());
+        assertEquals(QUEUE_URL, input.queueUrl());
+        assertEquals(RECEIPT_HANDLE, input.receiptHandle());
     }
 
     /**

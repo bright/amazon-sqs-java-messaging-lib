@@ -21,40 +21,40 @@ import java.util.Queue;
 
 import javax.jms.JMSException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import com.amazon.sqs.javamessaging.AmazonSQSMessagingClientWrapper;
 import com.amazon.sqs.javamessaging.SQSSession;
 import com.amazon.sqs.javamessaging.message.SQSMessage;
-import com.amazonaws.services.sqs.model.DeleteMessageBatchRequest;
-import com.amazonaws.services.sqs.model.DeleteMessageBatchRequestEntry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
 
 /**
  * Used to acknowledge group of messages. Acknowledging a consumed message
  * acknowledges all messages that the session has consumed before and including
  * that message.
- * <P>
+ * <p>
  * A big backlog of consumed messages can cause memory pressure, as well as an
  * increase on the probability of duplicates.
- * <P>
+ * <p>
  * This class is not safe for concurrent use.
  */
 public class RangedAcknowledger extends BulkSQSOperation implements Acknowledger {
-    private static final Log LOG = LogFactory.getLog(RangedAcknowledger.class);
-    
+    private static final Logger LOG = LoggerFactory.getLogger(RangedAcknowledger.class);
+
     private final AmazonSQSMessagingClientWrapper amazonSQSClient;
 
     private final SQSSession session;
-    
+
     private final Queue<SQSMessageIdentifier> unAckMessages;
 
     public RangedAcknowledger(AmazonSQSMessagingClientWrapper amazonSQSClient, SQSSession session) {
         this.amazonSQSClient = amazonSQSClient;
         this.session = session;
-        this.unAckMessages  = new LinkedList<SQSMessageIdentifier>();
+        this.unAckMessages = new LinkedList<SQSMessageIdentifier>();
     }
-    
+
     /**
      * Acknowledges all the consumed messages as well as the previously consumed
      * messages on the session via calling <code>deleteMessageBatch</code> until
@@ -75,7 +75,7 @@ public class RangedAcknowledger extends BulkSQSOperation implements Acknowledger
          */
         if (indexOfMessage == -1) {
             LOG.warn("SQSMessageID: " + message.getSQSMessageId() + " with SQSMessageReceiptHandle: " +
-                     message.getReceiptHandle() + " does not exist.");
+                    message.getReceiptHandle() + " does not exist.");
         } else {
             bulkAction(getUnAckMessages(), indexOfMessage);
         }
@@ -95,7 +95,7 @@ public class RangedAcknowledger extends BulkSQSOperation implements Acknowledger
         }
         return -1;
     }
-    
+
     /**
      * Updates the internal queue for the consumed but not acknowledged
      * messages if the message was not already on queue.
@@ -106,8 +106,8 @@ public class RangedAcknowledger extends BulkSQSOperation implements Acknowledger
         if (!unAckMessages.contains(messageIdentifier)) {
             unAckMessages.add(messageIdentifier);
         }
-    } 
-    
+    }
+
     /**
      * Returns the list of all consumed but not acknowledged messages.
      */
@@ -115,7 +115,7 @@ public class RangedAcknowledger extends BulkSQSOperation implements Acknowledger
     public List<SQSMessageIdentifier> getUnAckMessages() {
         return new ArrayList<SQSMessageIdentifier>(unAckMessages);
     }
-    
+
     /**
      * Clears the list of not acknowledged messages.
      */
@@ -123,7 +123,7 @@ public class RangedAcknowledger extends BulkSQSOperation implements Acknowledger
     public void forgetUnAckMessages() {
         unAckMessages.clear();
     }
-    
+
     /**
      * Acknowledges up to 10 messages via calling
      * <code>deleteMessageBatch</code>.
@@ -139,15 +139,15 @@ public class RangedAcknowledger extends BulkSQSOperation implements Acknowledger
         for (String receiptHandle : receiptHandles) {
             // Remove the message from queue of unAckMessages
             unAckMessages.poll();
-            
-            DeleteMessageBatchRequestEntry entry = new DeleteMessageBatchRequestEntry(
-                    Integer.toString(batchId), receiptHandle);
+
+            DeleteMessageBatchRequestEntry entry = DeleteMessageBatchRequestEntry.builder()
+                    .id(Integer.toString(batchId)).receiptHandle(receiptHandle).build();
             deleteMessageBatchRequestEntries.add(entry);
             batchId++;
         }
-        
-        DeleteMessageBatchRequest deleteMessageBatchRequest = new DeleteMessageBatchRequest(
-                queueUrl, deleteMessageBatchRequestEntries);
+
+        DeleteMessageBatchRequest deleteMessageBatchRequest = DeleteMessageBatchRequest.builder()
+                .queueUrl(queueUrl).entries(deleteMessageBatchRequestEntries).build();
         /**
          * TODO: If one of the batch calls fail, then the remaining messages on
          * the batch will not be deleted, and will be visible and delivered as

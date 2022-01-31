@@ -17,10 +17,10 @@ package com.amazon.sqs.javamessaging;
 import javax.jms.JMSException;
 
 import org.junit.Test;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.SqsClientBuilder;
 
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 
 import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
@@ -28,13 +28,6 @@ import static org.junit.Assert.*;
 
 public class SQSConnectionFactoryTest {
 
-    @Test
-    public void canUseDeprecatedBuilderToCreateFactory() throws JMSException {
-        SQSConnectionFactory factory = SQSConnectionFactory.builder().build();
-        SQSConnection connection = factory.createConnection();
-        connection.close();
-    }
-    
     @Test
     public void canCreateFactoryWithDefaultProviderSettings() throws JMSException {
         SQSConnectionFactory factory = new SQSConnectionFactory(new ProviderConfiguration());
@@ -44,7 +37,7 @@ public class SQSConnectionFactoryTest {
     
     @Test
     public void canCreateFactoryWithCustomClient() throws JMSException {
-        AmazonSQS client = mock(AmazonSQS.class);
+        SqsClient client = mock(SqsClient.class);
         SQSConnectionFactory factory = new SQSConnectionFactory(new ProviderConfiguration(), client);
         SQSConnection connection = factory.createConnection();
         connection.close();
@@ -52,14 +45,14 @@ public class SQSConnectionFactoryTest {
     
     @Test
     public void factoryWithCustomClientWillUseTheSameClient() throws JMSException {
-        AmazonSQS client = mock(AmazonSQS.class);
+        SqsClient client = mock(SqsClient.class);
         SQSConnectionFactory factory = new SQSConnectionFactory(new ProviderConfiguration(), client);
         SQSConnection connection1 = factory.createConnection();
         SQSConnection connection2 = factory.createConnection();
         
-        assertSame(client, connection1.getAmazonSQSClient()); 
-        assertSame(client, connection2.getAmazonSQSClient()); 
-        assertSame(connection1.getAmazonSQSClient(), connection2.getAmazonSQSClient()); 
+        assertSame(client, connection1.getAmazonSQSClient());
+        assertSame(client, connection2.getAmazonSQSClient());
+        assertSame(connection1.getAmazonSQSClient(), connection2.getAmazonSQSClient());
         
         connection1.close();
         connection2.close();
@@ -67,7 +60,7 @@ public class SQSConnectionFactoryTest {
     
     @Test
     public void canCreateFactoryWithCustomBuilder() throws JMSException {
-        AmazonSQSClientBuilder clientBuilder = AmazonSQSClientBuilder.standard().withRegion(Regions.US_EAST_1);
+        SqsClientBuilder clientBuilder = SqsClient.builder().region(Region.US_EAST_1);
         SQSConnectionFactory factory = new SQSConnectionFactory(new ProviderConfiguration(), clientBuilder);
         SQSConnection connection = factory.createConnection();
         connection.close();
@@ -75,12 +68,12 @@ public class SQSConnectionFactoryTest {
     
     @Test
     public void factoryWithCustomBuilderWillCreateNewClient() throws JMSException {
-        AmazonSQSClientBuilder clientBuilder = AmazonSQSClientBuilder.standard().withRegion(Regions.US_EAST_1);
+        SqsClientBuilder clientBuilder = SqsClient.builder().region(Region.US_EAST_1);
         SQSConnectionFactory factory = new SQSConnectionFactory(new ProviderConfiguration(), clientBuilder);
         SQSConnection connection1 = factory.createConnection();
         SQSConnection connection2 = factory.createConnection();
         
-        assertNotSame(connection1.getAmazonSQSClient(), connection2.getAmazonSQSClient()); 
+        assertNotSame(connection1.getAmazonSQSClient(), connection2.getAmazonSQSClient());
         
         connection1.close();
         connection2.close();

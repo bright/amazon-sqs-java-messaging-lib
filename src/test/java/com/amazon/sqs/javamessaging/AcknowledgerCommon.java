@@ -26,11 +26,11 @@ import javax.jms.JMSException;
 
 import junit.framework.Assert;
 
-import com.amazon.sqs.javamessaging.AmazonSQSMessagingClientWrapper;
 import com.amazon.sqs.javamessaging.acknowledge.Acknowledger;
 import com.amazon.sqs.javamessaging.message.SQSMessage;
 import com.amazon.sqs.javamessaging.message.SQSTextMessage;
-import com.amazonaws.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 
 /**
  * Parent class for the Acknowledger tests
@@ -60,12 +60,12 @@ public class AcknowledgerCommon {
             }
             
             Message sqsMessage = mock(Message.class);
-            when(sqsMessage.getReceiptHandle()).thenReturn("ReceiptHandle" + i);
-            when(sqsMessage.getMessageId()).thenReturn("MessageId" + i);
+            when(sqsMessage.receiptHandle()).thenReturn("ReceiptHandle" + i);
+            when(sqsMessage.messageId()).thenReturn("MessageId" + i);
             // Add mock Attributes
-            Map<String, String> mockAttributes = new HashMap<String, String>();
-            mockAttributes.put(SQSMessagingClientConstants.APPROXIMATE_RECEIVE_COUNT, "2");
-            when(sqsMessage.getAttributes()).thenReturn(mockAttributes);
+            Map<MessageSystemAttributeName, String> mockAttributes = new HashMap<MessageSystemAttributeName, String>();
+            mockAttributes.put(MessageSystemAttributeName.APPROXIMATE_RECEIVE_COUNT, "2");
+            when(sqsMessage.attributes()).thenReturn(mockAttributes);
             
             SQSMessage message = (SQSMessage) new SQSTextMessage(acknowledger, queueUrl, sqsMessage);
             

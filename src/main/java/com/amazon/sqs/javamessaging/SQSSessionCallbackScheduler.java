@@ -26,9 +26,6 @@ import javax.jms.JMSException;
 import javax.jms.MessageListener;
 import javax.jms.Session;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.amazon.sqs.javamessaging.SQSMessageConsumerPrefetch.MessageManager;
 import com.amazon.sqs.javamessaging.SQSSession.CallbackEntry;
 import com.amazon.sqs.javamessaging.acknowledge.AcknowledgeMode;
@@ -36,13 +33,15 @@ import com.amazon.sqs.javamessaging.acknowledge.Acknowledger;
 import com.amazon.sqs.javamessaging.acknowledge.NegativeAcknowledger;
 import com.amazon.sqs.javamessaging.acknowledge.SQSMessageIdentifier;
 import com.amazon.sqs.javamessaging.message.SQSMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Used internally to guarantee serial execution of message processing on
  * consumer message listeners.
  */
 public class SQSSessionCallbackScheduler implements Runnable {
-    private static final Log LOG = LogFactory.getLog(SQSSessionCallbackScheduler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SQSSessionCallbackScheduler.class);
     
     protected ArrayDeque<CallbackEntry> callbackQueue;
 

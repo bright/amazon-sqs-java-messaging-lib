@@ -26,11 +26,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-import com.amazon.sqs.javamessaging.AmazonSQSMessagingClientWrapper;
-import com.amazon.sqs.javamessaging.SQSSession;
 import com.amazon.sqs.javamessaging.acknowledge.AcknowledgeMode;
 import com.amazon.sqs.javamessaging.message.SQSMessage;
-import com.amazonaws.services.sqs.model.DeleteMessageRequest;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,9 +80,10 @@ public class UnorderedAcknowledgerTest extends AcknowledgerCommon {
         verify(amazonSQSClient, times(populateMessageSize)).deleteMessage(argumentCaptor.capture());
 
         for (SQSMessage msg : populatedMessages) {
-            DeleteMessageRequest deleteRequest = new DeleteMessageRequest()
-                    .withQueueUrl(msg.getQueueUrl())
-                    .withReceiptHandle(msg.getReceiptHandle());
+            DeleteMessageRequest deleteRequest = DeleteMessageRequest.builder()
+                    .queueUrl(msg.getQueueUrl())
+                    .receiptHandle(msg.getReceiptHandle())
+                    .build();
             assertTrue(argumentCaptor.getAllValues().contains(deleteRequest));
         }
     }
